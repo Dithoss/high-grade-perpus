@@ -6,10 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Product extends Model
 {
-    protected $fillable = ['name', 'barcode', 'price', 'stock'];
-    public function transactionItems()
-    {
-        return $this->hasMany(TransactionItem::class);
-    }
-
+    protected $fillable = [
+        'name','stock'
+    ];
 }

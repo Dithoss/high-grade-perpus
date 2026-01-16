@@ -11,13 +11,17 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('transaction_items', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('transaction_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('product_id')->constrained();
+        Schema::create('transaction', function (Blueprint $table) {
+            $table->uuid('id')->primary();
+            $table->uuid('book_id');
+            $table->uuid('user_id');
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+            $table->foreign('book_id')->references('id')->on('books')->onDelete('cascade');
             $table->integer('qty');
             $table->integer('price');
             $table->integer('subtotal');
+            $table->date('borrowed_at');
+            $table->date('returned_at');
             $table->timestamps();
         });
     }

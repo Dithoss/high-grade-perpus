@@ -11,13 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('transactions', function (Blueprint $table) {
-            $table->id();
-            $table->string('invoice_number')->unique();
-            $table->integer('total_price');
-            $table->integer('paid_amount');
-            $table->integer('change_amount');
-            $table->foreignId('cashier_id')->constrained('users');
+        Schema::create('categories', function (Blueprint $table) {
+            $table->uuid('id')->primary();
+            $table->string('name');
             $table->timestamps();
         });
     }
@@ -27,6 +23,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('transactions');
+        Schema::dropIfExists('categories');
     }
 };

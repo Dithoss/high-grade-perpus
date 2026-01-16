@@ -4,11 +4,13 @@ namespace App\Http\Handlers;
 
 use App\Contracts\Interface\ActivityLogInterface;
 use App\Contracts\Interface\AuthInterface;
+use App\Enums\UserRole;
 use App\Helpers\UploadHelper;
 use App\Http\Resources\DefaultResource;
 use App\Http\Resources\UserResource;
 use App\Models\ActivityLog;
 use App\Models\PasswordResetToken;
+use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -16,7 +18,6 @@ use Illuminate\Support\Str;
 class UserHandler
 {
     protected $authInterface;
-    protected $activityLogInterface;
 
     public function __construct(AuthInterface $authInterface)
     {
@@ -25,19 +26,43 @@ class UserHandler
 
     public function login(array $data)
     {
-        $user = $this->authInterface->login($data);
-        if (
-            !$user ||
-            !Hash::check($data['password'], $user->password)
-        ) {
-            throw new \Exception('Email atau password anda salah.');
+        $user = $this->authInterface->login([
+            'email' => $data['email'],
+            'password' => $data['password'],
+        ]);
+
+        if (!$user) {
+            throw new \Exception('Email atau password salah');
         }
-        $token = $user->createToken('token')->plainTextToken;
-        $user->token = $token;
+
         return $user;
     }
 
+    public function register(array $data): User
+    {
+        $user = $this->createUser($data);
+        $this->assignRole($user, UserRole::USER);
 
+        return $user;
+    }
+
+    private function createUser(array $data): User
+    {
+        return $this->authInterface->register([
+            'name'     => $data['name'],
+            'email'    => $data['email'],
+            'password' => Hash::make($data['password']),
+        ]);
+    }
+
+    private function assignRole(User $user, UserRole|string $role): void
+    {
+        $roleValue = $role instanceof UserRole
+            ? $role->value
+            : $role;
+
+        $user->syncRoles([$roleValue]);
+    }
 
     public function updateForgotPassword(array $data)
     {
@@ -61,14 +86,6 @@ class UserHandler
             PasswordResetToken::where('email', $data['email'])
                 ->where('token', $data['token'])
                 ->delete();
-
-            $this->activityLogInterface->log([
-                'id' => Str::uuid(),
-                'user_id' => $user->id,
-                'target_id' => $user->id, 
-                'action' => 'update_password',
-                'description' => 'User mengganti password melalui fitur lupa password.',
-            ]);
 
             DB::commit();
             return true;
@@ -94,14 +111,6 @@ class UserHandler
         try {
             $user->password = Hash::make($data['new_password']);
             $user->save();
-
-            $this->activityLogInterface->log([
-                'id' => Str::uuid(),
-                'user_id' => $user->id,
-                'target_id' => $user->id,
-                'action' => 'update_password',
-                'description' => 'User mengganti password melalui fitur update password.',
-            ]);
 
             DB::commit();
             return true;
@@ -141,13 +150,6 @@ class UserHandler
 
             $updatedUser = $this->authInterface->update($id, $data);
 
-            $this->activityLogInterface->log([
-                'id' => Str::uuid(),
-                'user_id' => auth()->id(), 
-                'target_id' => $user->id, 
-                'action' => 'update_customer',
-                'description' => 'Admin ' . auth()->user()->name . ' mengupdate data customer ' . $user->name,
-            ]);
 
             DB::commit();
             return $updatedUser;

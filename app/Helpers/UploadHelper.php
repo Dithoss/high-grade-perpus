@@ -12,13 +12,14 @@ class UploadHelper
     {
         $folder = $folder . '/' . date('Y/m');
         $filename = Str::random(20) . '.' . $file->getClientOriginalExtension();
-        return $file->storeAs($folder, $filename);
+
+        return $file->storeAs($folder, $filename, 'public');
     }
 
     public static function deleteFile(?string $path): void
     {
-        if (!empty($path) && Storage::exists($path)) {
-            Storage::delete($path);
+        if (!empty($path) && Storage::disk('public')->exists($path)) {
+            Storage::disk('public')->delete($path);
         }
     }
 }

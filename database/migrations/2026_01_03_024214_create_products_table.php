@@ -11,12 +11,16 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('products', function (Blueprint $table) {
-            $table->id();
+        Schema::create('books', function (Blueprint $table) {
+            $table->uuid('id')->primary();
+            $table->string('slug')->unique();
             $table->string('name');
+            $table->string('writer');
+            $table->uuid('category_id')->nullable();
+            $table->foreign('category_id')->references('id')->on('categories')->onDelete('set null');
             $table->string('barcode')->unique();
-            $table->integer('price');
             $table->integer('stock');
+            $table->string('image')->nullable();
             $table->timestamps();
         });
     }

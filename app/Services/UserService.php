@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
-class AuthService
+class UserService
 {
     protected $authInterface;
     public function __construct(AuthInterface $authInterface)

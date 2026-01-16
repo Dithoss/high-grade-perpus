@@ -1,21 +1,29 @@
-<?php
-
+<?
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Notifications\Notifiable;
 
 class Transaction extends Model
 {
+    use HasFactory, Notifiable, HasUuids;
+
     protected $fillable = [
-        'invoice_number',
-        'total_price',
-        'paid_amount',
-        'change_amount',
-        'cashier_id'
+        'product_id',
+        'qty',
+        'price',
+        'subtotal'
     ];
 
-    public function items()
+    public function user()
     {
-        return $this->hasMany(TransactionItem::class);
+        return $this->hasOne(User::class);
+    }
+
+    public function book()
+    {
+        return $this->belongsTo(Book::class);
     }
 }

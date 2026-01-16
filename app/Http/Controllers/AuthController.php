@@ -1,9 +1,8 @@
-<?
+<?php
+
 namespace App\Http\Controllers;
 
 use App\Contracts\Interface\AuthInterface;
-use App\Helpers\PaginateHelper;
-use App\Helpers\ResponseHelper;
 use App\Http\Handlers\UserHandler;
 use App\Http\Requests\Auth\ForgotPasswordRequest;
 use App\Http\Requests\Auth\LoginRequest;
@@ -11,232 +10,232 @@ use App\Http\Requests\Auth\StoreUserRequest;
 use App\Http\Requests\Auth\UpdateForgotPasswordRequest;
 use App\Http\Requests\Auth\UpdatePasswordRequest;
 use App\Http\Requests\Auth\UpdateUserRequest;
-use App\Http\Resources\UserCreateResource;
-use App\Http\Resources\UserResource;
-use App\Http\Resources\UserResourcePaginate;
-use App\Services\AuthService;
+use App\Http\Requests\Auth\RegisterRequest;
+use App\Services\UserService;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 
 class AuthController extends Controller
 {
-    protected $authHandler;
-    protected $authInterface;
-    protected $authService;
+    protected UserHandler $authHandler;
+    protected AuthInterface $authInterface;
+    protected UserService $authService;
 
-    public function __construct(UserHandler $authHandler, AuthInterface $authInterface, AuthService $authService)
-    {
+    public function __construct(
+        UserHandler $authHandler,
+        AuthInterface $authInterface,
+        UserService $authService
+    ) {
         $this->authHandler = $authHandler;
         $this->authInterface = $authInterface;
         $this->authService = $authService;
     }
+
+    public function showRegister()
+    {
+        return view('auth.register');
+    }
+
+    public function register(RegisterRequest $request)
+    {
+        $this->authHandler->register($request->validated());
+
+        return redirect()
+            ->route('login')
+            ->with('success', 'Registrasi berhasil, silakan login');
+    }
+    public function showLogin()
+    {
+        return view('auth.login');
+    }
+
     public function login(LoginRequest $request)
     {
+        $user = $this->authHandler->login($request->validated());
+
+        if (! $user) {
+            return back()->withErrors(['email' => 'Email atau password salah']);
+        }
+
+        $user->load('roles');
+
+        if ($user->hasRole('admin')) {
+            return redirect()->route('dashboard');
+        }
+
+        return redirect()->route('dashboard');
+    }
+
+
+    public function logout()
+    {
         try {
-            $user = $this->authHandler->login($request->validated());
-            return ResponseHelper::success(
-                new UserResource($user),
-                __('auth.login_success'),
-            );
-        } catch (\Throwable $th) {
-            return ResponseHelper::error(
-                __('auth.login_error'),
-                $th->getMessage(),
-                400
-            );
+            $this->authInterface->logout();
+
+            return redirect()
+                ->route('login')
+                ->with('success', __('auth.logout_success'));
+        } catch (\Throwable $e) {
+            return back()->withErrors(__('auth.logout_error'));
         }
     }
+
+
+    public function showForgotPassword()
+    {
+        return view('auth.forgot-password');
+    }
+
     public function forgotPassword(ForgotPasswordRequest $request)
     {
         try {
-            $user = $this->authService->forgotPassword($request->validated()['email']);
-            return ResponseHelper::success(
-                $user,
-                __('auth.forgot_password_success')
-            );
-        } catch (\Throwable $th) {
-            return ResponseHelper::error(
-                __('auth.forgot_password_error'),
-                $th->getMessage(),
-                400
-            );
+            $this->authService->forgotPassword($request->validated()['email']);
+
+            return back()->with('success', __('auth.forgot_password_success'));
+        } catch (\Throwable $e) {
+            return back()->withErrors(__('auth.forgot_password_error'));
         }
+    }
+
+    public function showResetPassword(string $token)
+    {
+        return view('auth.reset-password', compact('token'));
     }
 
     public function updateForgotPassword(UpdateForgotPasswordRequest $request)
     {
         try {
-            $user = $this->authHandler->updateForgotPassword($request->validated());
-            return ResponseHelper::success(
-                $user,
-                __('auth.update_password_success')
-            );
-        } catch (\Throwable $th) {
-            return ResponseHelper::error(
-                __('auth.update_password_error'),
-                $th->getMessage(),
-                400
-            );
+            $this->authHandler->updateForgotPassword($request->validated());
+
+            return redirect()
+                ->route('login')
+                ->with('success', __('auth.update_password_success'));
+        } catch (\Throwable $e) {
+            return back()->withErrors(__('auth.update_password_error'));
         }
     }
 
     public function updatePassword(UpdatePasswordRequest $request)
     {
         try {
-            $data = $request->validated();
-            $user = $this->authHandler->updatePassword($data);
-            return ResponseHelper::success(
-                $user,
-                __('auth.update_password_success')
-            );
-        } catch (\Throwable $th) {
-            return ResponseHelper::error(
-                __('auth.update_password_error'),
-                $th->getMessage(),
-                400
-            );
-        }
-    }
+            $this->authHandler->updatePassword($request->validated());
 
-    public function logout()
-    {
-        try {
-            $this->authInterface->logout();
-            return ResponseHelper::success(
-                null,
-                __('auth.logout_success')
-            );
-        } catch (\Throwable $th) {
-            return ResponseHelper::error(
-                __('auth.logout_error'),
-                $th->getMessage(),
-                400
-            );
-        }
-    }
-    public function index(Request $request): JsonResponse
-    {
-        try {
-            $filters = $request->only([
-                'search',
-                'sort_by',
-                'sort_dir',
-                'date_from',
-                'date_to',
-                'per_page'
-            ]);
-
-            $users = $this->authInterface->getAll($filters);
-            $paginate = PaginateHelper::getPaginate($users);
-            $resourceCollection = new UserResourcePaginate($users, $paginate);
-
-            return ResponseHelper::success(
-                $resourceCollection,
-                __('alert.data_found'),
-                Response::HTTP_OK,
-                true
-            );
+            return back()->with('success', __('auth.update_password_success'));
         } catch (\Throwable $e) {
-            return ResponseHelper::error(__('alert.fetch_data_failed'), $e->getMessage(), 400);
+            return back()->withErrors(__('auth.update_password_error'));
         }
     }
 
-    public function store(StoreUserRequest $request): JsonResponse
+
+    public function index(Request $request)
+    {
+        $filters = $request->only([
+            'search',
+            'sort_by',
+            'sort_dir',
+            'date_from',
+            'date_to',
+            'per_page'
+        ]);
+
+        $users = $this->authInterface->getAll($filters);
+
+        return view('users.index', compact('users'));
+    }
+
+    public function create()
+    {
+        return view('users.create');
+    }
+    public function dashboard()
+    {
+        return view('dashboard');
+    }
+
+    public function store(StoreUserRequest $request)
     {
         try {
-            $data = $request->validated();
-            $user = $this->authHandler->storeCustomer($data);
+            $this->authHandler->storeCustomer($request->validated());
 
-            return ResponseHelper::success(
-                new UserCreateResource($user),
-                __('alert.add_success'),
-                Response::HTTP_CREATED
-            );
+            return redirect()
+                ->route('users.index')
+                ->with('success', __('alert.add_success'));
         } catch (\Throwable $e) {
-            return ResponseHelper::error(__('alert.add_failed'), $e->getMessage(), 400);
+            return back()->withErrors(__('alert.add_failed'))->withInput();
         }
     }
 
-    public function update(UpdateUserRequest $request, string $id): JsonResponse
+    public function edit(string $id)
     {
         try {
-            $data = $request->validated();
+            $user = $this->authInterface->findById($id);
 
-            $user = $this->authHandler->updateCustomer($id, $data);
-
-            return ResponseHelper::success(
-                new UserResource($user),
-                __('alert.update_success')
-            );
+            return view('users.edit', compact('user'));
         } catch (ModelNotFoundException $e) {
-            return ResponseHelper::error(__('alert.data_not_found'), 404);
-        } catch (\Throwable $e) {
-            return ResponseHelper::error(__('alert.update_failed'), $e->getMessage(), 400);
+            abort(404);
         }
     }
 
-    public function destroy(string $id): JsonResponse
+    public function update(UpdateUserRequest $request, string $id)
+    {
+        try {
+            $this->authHandler->updateCustomer($id, $request->validated());
+
+            return redirect()
+                ->route('users.index')
+                ->with('success', __('alert.update_success'));
+        } catch (ModelNotFoundException $e) {
+            abort(404);
+        } catch (\Throwable $e) {
+            return back()->withErrors(__('alert.update_failed'))->withInput();
+        }
+    }
+
+    public function destroy(string $id)
     {
         try {
             $this->authInterface->delete($id);
-            return ResponseHelper::success(null, __('alert.delete_success'));
+
+            return back()->with('success', __('alert.delete_success'));
         } catch (ModelNotFoundException $e) {
-            return ResponseHelper::error(__('alert.data_not_found'), 404);
-        } catch (\Throwable $e) {
-            return ResponseHelper::error(__('alert.delete_failed'), $e->getMessage(), 400);
+            abort(404);
         }
     }
-    public function restore(string $id): JsonResponse
+
+    public function trash(Request $request)
+    {
+        $filters = $request->only([
+            'search',
+            'per_page',
+            'date_from',
+            'date_to'
+        ]);
+
+        $users = $this->authInterface->trash($filters);
+
+        return view('users.trash', compact('users'));
+    }
+
+    public function restore(string $id)
     {
         try {
             $this->authInterface->restore($id);
-            return ResponseHelper::success(null, __('alert.user_restore_success'));
+
+            return back()->with('success', __('alert.user_restore_success'));
         } catch (ModelNotFoundException $e) {
-            return ResponseHelper::error(__('alert.data_not_found'), 404);
-        } catch (\Throwable $e) {
-            return ResponseHelper::error(__('alert.user_restore_failed'), $e->getMessage(), 400);
+            abort(404);
         }
     }
 
-
-    public function forceDelete(string $id): JsonResponse
+    public function forceDelete(string $id)
     {
         try {
             $this->authInterface->forceDelete($id);
-            return ResponseHelper::success(null, __('alert.delete_success'));
+
+            return back()->with('success', __('alert.delete_success'));
         } catch (ModelNotFoundException $e) {
-            return ResponseHelper::error(__('alert.data_not_found'), 404);
-        } catch (\Throwable $e) {
-            return ResponseHelper::error(__('alert.delete_failed'), $e->getMessage(), 400);
+            abort(404);
         }
     }
-
-
-    public function trash(Request $request): JsonResponse
-    {
-        try {
-            $filters = $request->only([
-                'search',
-                'sort',
-                'detail',
-                'created_from',
-                'published_from',
-                'per_page',
-                'stock_min',
-                'stock_max'
-            ]);
-
-            $perPage = (int) ($filters['per_page'] ?? 15);
-            $users = $this->authInterface->trash($filters);
-            $paginate = PaginateHelper::getPaginate($users);
-            $resourceCollection = new UserResourcePaginate($users, $paginate);
-
-            return ResponseHelper::success($resourceCollection, __('alert.data_found'));
-        } catch (\Throwable $e) {
-            return ResponseHelper::error(__('alert.fetch_data_failed'), $e->getMessage(), 400);
-        }
-    }
-
+    
 }

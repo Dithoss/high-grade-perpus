@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Contracts\Repository;
+namespace App\Contracts\Repositories;
 
+use Illuminate\Support\Facades\Auth;
 use App\Contracts\Interface\AuthInterface;
 use App\Helpers\QueryFilterHelper;
 use App\Http\Resources\DefaultResource;
@@ -21,12 +22,24 @@ class AuthRepository implements AuthInterface
     }
     public function login(array $data)
     {
-        return User::where('email', $data['email'])->first();
+        if (!Auth::guard('web')->attempt($data)) {
+            return null;
+        }
+
+        request()->session()->regenerate();
+
+        return Auth::guard('web')->user();
+    }
+    public function register(array $data):User
+    {
+        return User::create($data);
     }
 
     public function logout()
     {
-        auth()->user()->tokens()->delete();
+        auth()->logout();
+        request()->session()->invalidate();
+        request()->session()->regenerateToken();    
     }
 
     public function forgotPassword(string $email)

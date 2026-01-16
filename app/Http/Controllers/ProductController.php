@@ -2,64 +2,64 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Book;
 use App\Models\Product;
 use Illuminate\Http\Request;
 
 class ProductController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        //
+        $products = Product::all();
+        return view('products.index', compact('products'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
-        //
+        return view('products.create');
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        //
+        $request->validate([
+            'name'  => 'required|string|max:255',
+            'stock'  => 'required|integer|min:0',
+        ]);
+
+        Book::create([
+            'name'  => $request->name,
+            'stock'  => $request->stock,
+        ]);
+
+        return redirect()->route('products.index');
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Product $product)
+    public function edit($id)
     {
-        //
+        $book = Book::findOrFail($id);
+        return view('products.edit', compact('book'));
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Product $product)
+    public function update(Request $request, $id)
     {
-        //
+        $request->validate([
+            'name'  => 'required|string|max:255',
+            'stock'  => 'required|integer|min:0',
+        ]);
+
+        $book = Book::findOrFail($id);
+
+        $book->update([
+            'name'  => $request->name,
+            'stock'  => $request->stock,
+        ]);
+
+        return redirect()->route('products.index');
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Product $product)
+    public function destroy($id)
     {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Product $product)
-    {
-        //
+        Book::findOrFail($id)->delete();
+        return redirect()->route('products.index');
     }
 }
