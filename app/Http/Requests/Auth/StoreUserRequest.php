@@ -24,12 +24,14 @@ class StoreUserRequest extends FormRequest
         return [
             'name' => 'required|string|min:3',
             'email' => 'required|email|unique:users,email',
-            'gender' => 'required|string',
-            'birthDate' => 'nullable|date',
-            'address' => 'required|string',
-            'phone_number' => 'required|string',
-            'password' => 'required|string|min:8',
-            'image' => 'nullable|image',
+            'role' => 'required|exists:roles,name',
+
+            // 'gender' => 'required|string',
+            // 'birthDate' => 'nullable|date',
+            // 'address' => 'required|string',
+            // 'phone_number' => 'required|string',
+            'password' => 'required|string|min:8|confirmed',
+            // 'image' => 'nullable|image',
         ];
     }
 
@@ -43,12 +45,12 @@ class StoreUserRequest extends FormRequest
             'email.email' => 'Format email tidak valid.',
             'email.unique' => 'Email sudah digunakan.',
 
-            'gender.required' => 'Gender wajib diisi.',
-            'birthDate.date' => 'Tanggal lahir menggunakan format tanggal.',
-            'address.required' => 'Alamat wajib diisi.',
-            'phone_number.required' => 'Nomer telepon wajib diisi.',
-            'password.min' => 'Kata sandi minimal 8 karakter.',
-            'image.image' => 'Image harus berupa gambar',
+            // 'gender.required' => 'Gender wajib diisi.',
+            // 'birthDate.date' => 'Tanggal lahir menggunakan format tanggal.',
+            // 'address.required' => 'Alamat wajib diisi.',
+            // 'phone_number.required' => 'Nomer telepon wajib diisi.',
+            // 'password.min' => 'Kata sandi minimal 8 karakter.',
+            // 'image.image' => 'Image harus berupa gambar',
         ];
     }
 }

@@ -11,17 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('transaction', function (Blueprint $table) {
+        Schema::create('transactions', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->uuid('book_id');
-            $table->uuid('user_id');
+            $table->uuid('user_id')->index();
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
-            $table->foreign('book_id')->references('id')->on('books')->onDelete('cascade');
-            $table->integer('qty');
-            $table->integer('price');
-            $table->integer('subtotal');
-            $table->date('borrowed_at');
-            $table->date('returned_at');
+            $table->enum('status', ['borrowed', 'return_requested', 'returned', 'late', 'lost', 'damaged'])->default('borrowed');
+            $table->string('receipt_number')->unique();
+            $table->date('borrowed_at')->index();
+            $table->date('due_at')->nullable()->index();
+            $table->date('returned_at')->nullable()->index();
             $table->timestamps();
         });
     }
@@ -31,6 +29,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('transaction_items');
+        Schema::dropIfExists('transaction');
     }
 };

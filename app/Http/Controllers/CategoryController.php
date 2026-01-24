@@ -6,8 +6,10 @@ use App\Contracts\Interface\CategoryInterface;
 use App\Http\Requests\Category\StoreCategory;
 use App\Http\Requests\Category\UpdateCategory;
 use App\Models\Category;
+use App\Models\User;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class CategoryController extends Controller
 {
@@ -52,10 +54,10 @@ class CategoryController extends Controller
 
     public function edit(string $id)
     {
-        $book = $this->repo->findById($id);
+        $category = $this->repo->findById($id);
         $categories = Category::all();
 
-        return view('categories.edit', compact('book', 'categories'));
+        return view('categories.edit', compact('category', 'categories'));
     }
 
 
@@ -97,4 +99,18 @@ class CategoryController extends Controller
 
         return back()->with('success', __('alert.user_restore_success'));
     }
+    public function massDelete(Request $request)
+    {
+        $ids = $request->validate([
+            'ids' => ['required', 'array'],
+            'ids.*' => ['uuid', 'exists:categories,id'],
+        ])['ids'];
+
+        DB::transaction(function () use ($ids) {
+            Category::whereIn('id', $ids)->delete(); // soft delete
+        });
+
+        return back()->with('success', 'User berhasil dihapus.');
+    }
+
 }

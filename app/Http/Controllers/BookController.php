@@ -7,8 +7,10 @@ use App\Contracts\Interface\CategoryInterface;
 use App\Http\Handlers\BookHandler;
 use App\Http\Requests\Book\StoreBook;
 use App\Http\Requests\Book\UpdateBook;
+use App\Models\Book;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class BookController extends Controller
 {
@@ -106,4 +108,18 @@ class BookController extends Controller
 
         return back()->with('success', __('alert.user_restore_success'));
     }
+    public function massDelete(Request $request)
+    {
+        $ids = $request->validate([
+            'ids' => ['required', 'array'],
+            'ids.*' => ['uuid', 'exists:books,id'],
+        ])['ids'];
+
+        DB::transaction(function () use ($ids) {
+            Book::whereIn('id', $ids)->delete(); // soft delete
+        });
+
+        return back()->with('success', 'User berhasil dihapus.');
+    }
+
 }

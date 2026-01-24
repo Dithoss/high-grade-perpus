@@ -2,64 +2,325 @@
 
 namespace App\Http\Controllers;
 
+use App\Contracts\Interface\TransactionInterface;
+use App\Events\TransactionCreated;
+use App\Http\Requests\Transaction\StoreTransaction;
+use App\Http\Requests\Transaction\StoreTransactionAdmin;
+use App\Http\Requests\Transaction\UpdateTransaction;
+use App\Models\Fine;
 use App\Models\Transaction;
+use App\Models\AuditLog;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class TransactionController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
-    {
-        //
-    }
+    public function __construct(
+        protected TransactionInterface $repo
+    ) {}
 
     /**
-     * Show the form for creating a new resource.
+     * List transaksi + filter
      */
+    public function index(Request $request)
+    {
+        $filters = $request->only([
+            'search',
+            'sort_by',
+            'sort_dir',
+            'category_id',
+            'book_id',
+            'date_from',
+            'date_to',
+            'status'
+        ]);
+
+        $userId = auth()->user()->hasRole('user') ? auth()->id() : null;
+        $transactions = $this->repo->getWithFilters($filters, $userId);
+
+        return view('transactions.index', compact('transactions'));
+    }
+
     public function create()
     {
-        //
+        return view('transactions.create');
+    }
+
+    public function store(StoreTransaction $request)
+    {
+        DB::transaction(function () use ($request) {
+            $transaction = $this->repo->store(
+                array_merge(
+                    $request->validated(),
+                    ['user_id' => auth()->id()]
+                )
+            );
+
+            event(new TransactionCreated($transaction));
+        });
+
+        return redirect()
+            ->route('transactions.index')
+            ->with('success', 'Transaksi berhasil dibuat');
+    }
+
+    public function storeAdmin(StoreTransactionAdmin $request)
+    {
+        DB::transaction(function () use ($request) {
+            $transaction = $this->repo->store($request->validated());
+            event(new TransactionCreated($transaction));
+        });
+
+        return redirect()
+            ->route('transactions.index')
+            ->with('success', 'Transaksi berhasil dibuat');
+    }
+
+    public function show(string $id)
+    {
+        $transaction = $this->repo->findById($id);
+
+        if (auth()->user()->hasRole('user') &&
+            $transaction->user_id !== auth()->id()) {
+            abort(403);
+        }
+
+        return view('transactions.show', compact('transaction'));
+    }
+
+    public function edit(string $id)
+    {
+        try {
+            $transaction = $this->repo->findById($id);
+            
+            if (auth()->user()->hasRole('user') && $transaction->user_id !== auth()->id()) {
+                abort(403, 'Anda tidak memiliki akses ke transaksi ini');
+            }
+            
+            return view('transactions.edit', compact('transaction'));
+        } catch (ModelNotFoundException) {
+            abort(404);
+        }
+    }
+
+    public function update(UpdateTransaction $request, string $id)
+    {
+        try {
+            $transaction = $this->repo->findById($id);
+            
+            if (auth()->user()->hasRole('user') && $transaction->user_id !== auth()->id()) {
+                abort(403, 'Anda tidak memiliki akses ke transaksi ini');
+            }
+            
+            // Only damaged and lost statuses are truly final
+            if (in_array($transaction->status, ['damaged', 'lost'])) {
+                abort(403, 'Transaksi sudah final dan tidak dapat diubah');
+            }
+
+            $oldStatus = $transaction->status;
+            $updateData = ['status' => $request->status];
+
+            // If changing to returned, set the timestamp
+            if ($request->status === 'returned' && !$transaction->returned_at) {
+                $updateData['returned_at'] = now();
+            }
+
+            $this->repo->update($id, $updateData);
+
+            AuditLog::create([
+                'user_id'     => auth()->id(),
+                'action'      => 'update',
+                'target_type' => Transaction::class,
+                'target_id'   => $transaction->id,
+                'description' => "Status transaksi diubah dari {$oldStatus} ke {$request->status}",
+            ]);
+
+            // If admin marks as returned, redirect to inspection
+            if ($request->status === 'returned' && auth()->user()->hasRole('admin')) {
+                return redirect()
+                    ->route('transactions.inspect', $id)
+                    ->with('success', 'Status diubah menjadi dikembalikan, silakan lakukan inspeksi');
+            }
+
+            return back()->with('success', 'Status transaksi berhasil diperbarui');
+        } catch (ModelNotFoundException) {
+            abort(404);
+        }
+    }
+
+    public function requestReturn(string $id)
+    {
+        $transaction = $this->repo->findById($id);
+
+        if ($transaction->user_id !== auth()->id()) {
+            abort(403);
+        }
+
+        if ($transaction->status !== 'borrowed') {
+            return back()->with('error', 'Transaksi tidak dapat diajukan pengembalian');
+        }
+
+        $this->repo->update($id, ['status' => 'return_requested']);
+
+        AuditLog::create([
+            'user_id'     => auth()->id(),
+            'action'      => 'request_return',
+            'target_type' => Transaction::class,
+            'target_id'   => $transaction->id,
+            'description' => 'User mengajukan pengembalian buku',
+        ]);
+
+        return back()->with('success', 'Pengembalian diajukan, menunggu konfirmasi admin');
+    }
+
+    public function confirmReturn(string $id)
+    {
+        $transaction = $this->repo->findById($id);
+
+        if ($transaction->status !== 'return_requested') {
+            return back()->with('error', 'Transaksi tidak dalam status pengajuan pengembalian');
+        }
+
+        // Update to returned and set returned_at
+        $this->repo->update($id, [
+            'status' => 'returned',
+            'returned_at' => now()
+        ]);
+
+        // Check for late days and create fine if needed
+        $lateDays = max(0, now()->diffInDays($transaction->due_at, false));
+        
+        if ($lateDays > 0) {
+            \App\Models\Fine::create([
+                'transaction_id' => $transaction->id,
+                'type' => 'late',
+                'late_days' => $lateDays,
+                'amount' => $lateDays * 5000, // Rp 5.000 per day
+                'status' => 'unpaid',
+                'note' => "Denda keterlambatan {$lateDays} hari"
+            ]);
+        }
+
+        AuditLog::create([
+            'user_id'     => auth()->id(),
+            'action'      => 'confirm_return',
+            'target_type' => Transaction::class,
+            'target_id'   => $transaction->id,
+            'description' => 'Admin mengkonfirmasi pengembalian buku',
+        ]);
+
+        return redirect()
+            ->route('transactions.inspect', $transaction->id)
+            ->with('success', 'Pengembalian dikonfirmasi, silakan lakukan inspeksi');
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Show inspection form
      */
-    public function store(Request $request)
+    public function inspect(Transaction $transaction)
     {
-        //
+        // Only allow for returned transactions
+        if ($transaction->status !== 'returned') {
+            return redirect()->route('transactions.index')
+                ->with('error', 'Transaksi ini belum dikembalikan.');
+        }
+
+        return view('transactions.inspect', compact('transaction'));
     }
 
     /**
-     * Display the specified resource.
+     * Store inspection result
      */
-    public function show(Transaction $transaction)
+    public function inspectStore(Request $request, Transaction $transaction)
     {
-        //
+        $request->validate([
+            'condition' => 'required|in:good,damaged,lost',
+            'fine_amount' => 'nullable|numeric|min:0',
+            'fine_type' => 'nullable|in:broken,lost',
+            'note' => 'nullable|string|max:1000',
+        ]);
+
+        if ($request->condition === 'good') {
+            $transaction->update([
+                'status' => 'returned', 
+                'inspection_note' => $request->note,
+                'inspected_at' => now(),
+            ]);
+
+            return redirect()->route('transactions.index')
+                ->with('success', 'Inspeksi selesai. Buku dalam kondisi baik.');
+        }
+
+        if (in_array($request->condition, ['damaged', 'lost'])) {
+            if (!$request->fine_amount || $request->fine_amount <= 0) {
+                return back()->withErrors(['fine_amount' => 'Jumlah denda harus diisi untuk kondisi rusak atau hilang.']);
+            }
+
+            Fine::create([
+                'transaction_id' => $transaction->id,
+                'type' => $request->fine_type ?? ($request->condition === 'lost' ? 'lost' : 'broken'),
+                'amount' => $request->fine_amount,
+                'late_days' => 0,
+                'note' => $request->note,
+                'status' => 'unpaid',
+            ]);
+
+            // Update transaction status
+            $transaction->update([
+                'status' => $request->condition,
+                'inspection_note' => $request->note,
+                'inspected_at' => now(),
+            ]);
+
+            $conditionText = $request->condition === 'damaged' ? 'rusak' : 'hilang';
+            
+            return redirect()->route('transactions.index')
+                ->with('success', "Inspeksi selesai. Buku dalam kondisi {$conditionText}. Denda telah ditambahkan.");
+        }
+
+        return back()->with('error', 'Terjadi kesalahan saat menyimpan hasil inspeksi.');
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Transaction $transaction)
+    public function destroy(string $id)
     {
-        //
+        try {
+            $this->repo->delete($id);
+
+            AuditLog::create([
+                'user_id'     => auth()->id(),
+                'action'      => 'delete',
+                'target_type' => Transaction::class,
+                'target_id'   => $id,
+                'description' => 'Menghapus transaksi (soft delete)',
+            ]);
+
+            return redirect()
+                ->route('transactions.index')
+                ->with('success', 'Transaksi berhasil dihapus');
+        } catch (ModelNotFoundException) {
+            abort(404);
+        }
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Transaction $transaction)
+    public function trash()
     {
-        //
+        $transactions = $this->repo->trash([]);
+        return view('transactions.trash', compact('transactions'));
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Transaction $transaction)
+    public function restore(string $id)
     {
-        //
+        $this->repo->restore($id);
+
+        AuditLog::create([
+            'user_id'     => auth()->id(),
+            'action'      => 'restore',
+            'target_type' => Transaction::class,
+            'target_id'   => $id,
+            'description' => 'Restore transaksi',
+        ]);
+
+        return back()->with('success', 'Transaksi berhasil dipulihkan');
     }
 }

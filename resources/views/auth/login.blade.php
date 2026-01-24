@@ -158,23 +158,6 @@
                 </div>
             </form>
         </div>
-
-        <!-- Demo Credentials (Remove in production) -->
-        <div class="mt-6 bg-white/50 backdrop-blur-sm rounded-lg p-4 text-center">
-            <p class="text-xs text-gray-600 font-medium mb-2">Demo Credentials:</p>
-            <div class="grid grid-cols-2 gap-3 text-xs">
-                <div class="bg-blue-50 rounded p-2">
-                    <p class="font-semibold text-blue-900">Admin</p>
-                    <p class="text-blue-700">admin@gmail.com</p>
-                    <p class="text-blue-700">1234</p>
-                </div>
-                <div class="bg-green-50 rounded p-2">
-                    <p class="font-semibold text-green-900">User</p>
-                    <p class="text-green-700">user@gmail.com</p>
-                    <p class="text-green-700">1234</p>
-                </div>
-            </div>
-        </div>
     </div>
 
     <script>

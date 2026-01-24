@@ -113,7 +113,6 @@
                     class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition-all duration-200 outline-none font-mono @error('barcode') border-red-500 @enderror" 
                     placeholder="Masukkan barcode buku"
                     value="{{ old('barcode') }}"
-                    required
                 >
                 @error('barcode')
                     <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
@@ -147,17 +146,17 @@
                 @enderror
             </div>
 
-            <!-- Action Buttons -->
             <div class="flex items-center justify-end space-x-3 pt-6 border-t border-gray-200">
-                <a 
-                    href="{{ route('books.index') }}" 
+                <a
+                    href="{{ route('books.index') }}"
                     class="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg font-semibold hover:bg-gray-200 transition-all duration-200 flex items-center space-x-2"
                 >
                     <i class="fas fa-arrow-left"></i>
                     <span>Kembali</span>
                 </a>
-                <button 
-                    type="submit" 
+
+                <button
+                    type="submit"
                     class="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg font-semibold hover:from-blue-700 hover:to-indigo-700 shadow-lg hover:shadow-xl transition-all duration-200 flex items-center space-x-2"
                 >
                     <i class="fas fa-save"></i>

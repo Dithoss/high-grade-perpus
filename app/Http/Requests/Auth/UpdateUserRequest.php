@@ -37,7 +37,7 @@ class UpdateUserRequest extends FormRequest
             'address' => 'sometimes|string',
             'phone_number' => 'sometimes|string',
             'password' => 'sometimes|string|min:8',
-            'image' => 'sometimes|nullable|image',
+            'image' => 'sometimes|nullable|image|mimes:jpg,png,jpeg|max:2893',
         ];
     }
 

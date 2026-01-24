@@ -61,9 +61,9 @@ class AuthController extends Controller
 
         if ($user->hasRole('admin')) {
             return redirect()->route('dashboard');
+        }else{
+            return redirect()->route('users.dashboard');
         }
-
-        return redirect()->route('dashboard');
     }
 
 
@@ -151,19 +151,27 @@ class AuthController extends Controller
     {
         return view('dashboard');
     }
+    public function userDashboard()
+    {
+        return view('users.dashboard');
+    }
 
     public function store(StoreUserRequest $request)
     {
         try {
-            $this->authHandler->storeCustomer($request->validated());
+            $user = $this->authHandler->storeCustomer($request->validated());
+
+            $user->assignRole($request->role);
 
             return redirect()
                 ->route('users.index')
                 ->with('success', __('alert.add_success'));
         } catch (\Throwable $e) {
-            return back()->withErrors(__('alert.add_failed'))->withInput();
-        }
+        dd($e->getMessage(), $e->getTraceAsString());
+        }   
+
     }
+
 
     public function edit(string $id)
     {

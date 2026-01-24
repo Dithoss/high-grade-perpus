@@ -2,7 +2,7 @@
 @section('title', 'Daftar Buku')
 @section('content')
 <div class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-8 px-4 sm:px-6 lg:px-8">
-    <div class="max-w-7xl mx-auto">
+    <div>
         
         {{-- Flash Message --}}
         @if (session('success'))
@@ -12,6 +12,17 @@
                         <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
                     </svg>
                     <p class="text-green-800 font-medium">{{ session('success') }}</p>
+                </div>
+            </div>
+        @endif
+
+        @if (session('error'))
+            <div class="mb-6 bg-red-50 border-l-4 border-red-500 rounded-lg p-4 shadow-md animate-fade-in">
+                <div class="flex items-center">
+                    <svg class="w-6 h-6 text-red-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                    </svg>
+                    <p class="text-red-800 font-medium">{{ session('error') }}</p>
                 </div>
             </div>
         @endif
@@ -30,13 +41,26 @@
                 </div>
             </div>
             @role('admin')
-                <a href="{{ route('books.create') }}" 
-                class="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-                    </svg>
-                    Tambah Buku
-                </a>
+                <div class="flex gap-3">
+                    <button
+                        id="massDeleteBtn"
+                        onclick="massDeleteSelected()"
+                        class="hidden items-center px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg shadow-lg hover:shadow-xl transition-all duration-200"
+                    >
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                        </svg>
+                        Hapus (<span id="selectedCount">0</span>)
+                    </button>
+
+                    <a href="{{ route('books.create') }}" 
+                    class="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                        </svg>
+                        Tambah Buku
+                    </a>
+                </div>
             @endrole
         </div>
 
@@ -131,6 +155,11 @@
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gradient-to-r from-gray-50 to-gray-100">
                         <tr>
+                            @role('admin')
+                            <th class="px-6 py-4 text-left">
+                                <input type="checkbox" id="selectAll" onclick="toggleSelectAll()" class="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500">
+                            </th>
+                            @endrole
                             <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">No</th>
                             <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Nama Buku</th>
                             <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Barcode</th>
@@ -143,6 +172,11 @@
                     <tbody class="bg-white divide-y divide-gray-200">
                         @forelse ($book as $item)
                             <tr class="hover:bg-gray-50 transition-colors duration-150">
+                                @role('admin')
+                                <td class="px-6 py-4">
+                                    <input type="checkbox" class="book-checkbox w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500" value="{{ $item->id }}" onclick="updateSelectedCount()">
+                                </td>
+                                @endrole
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                                     {{ $loop->iteration + $book->firstItem() - 1 }}
                                 </td>
@@ -204,7 +238,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="px-6 py-12 text-center">
+                                <td colspan="{{ auth()->user()->hasRole('admin') ? '8' : '7' }}" class="px-6 py-12 text-center">
                                     <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                                     </svg>
@@ -221,6 +255,12 @@
             <div class="md:hidden divide-y divide-gray-200">
                 @forelse ($book as $item)
                     <div class="p-4 hover:bg-gray-50 transition-colors duration-150">
+                        @role('admin')
+                        <div class="flex items-center mb-3">
+                            <input type="checkbox" class="book-checkbox w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500 mr-3" value="{{ $item->id }}" onclick="updateSelectedCount()">
+                        </div>
+                        @endrole
+                        
                         <div class="flex justify-between items-start mb-3">
                             <div class="flex-1">
                                 <h4 class="text-base font-semibold text-gray-900 mb-1">{{ $item->name }}</h4>
@@ -284,9 +324,70 @@
         </div>
 
     </div>
+</div>
+
+{{-- Mass Delete Form --}}
+<form id="massDeleteForm" action="{{ route('books.mass-delete') }}" method="POST" class="hidden">
+    @csrf
+    @method('DELETE')
+    <input type="hidden" name="ids" id="selectedIds">
+</form>
+
+@push('scripts')
+<script>
+function toggleSelectAll() {
+    const selectAll = document.getElementById('selectAll');
+    const checkboxes = document.querySelectorAll('.book-checkbox');
+    
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = selectAll.checked;
+    });
+    
+    updateSelectedCount();
+}
+
+function updateSelectedCount() {
+    const checkboxes = document.querySelectorAll('.book-checkbox:checked');
+    const count = checkboxes.length;
+    const massDeleteBtn = document.getElementById('massDeleteBtn');
+    const selectedCount = document.getElementById('selectedCount');
+    const selectAll = document.getElementById('selectAll');
+    
+    selectedCount.textContent = count;
+    
+    if (count > 0) {
+        massDeleteBtn.classList.remove('hidden');
+        massDeleteBtn.classList.add('inline-flex');
+    } else {
+        massDeleteBtn.classList.add('hidden');
+        massDeleteBtn.classList.remove('inline-flex');
+    }
+    
+    // Update "Select All" checkbox state
+    const allCheckboxes = document.querySelectorAll('.book-checkbox');
+    if (selectAll) {
+        selectAll.checked = count === allCheckboxes.length && count > 0;
+    }
+}
+
+function massDeleteSelected() {
+    const checkboxes = document.querySelectorAll('.book-checkbox:checked');
+    const ids = Array.from(checkboxes).map(cb => cb.value);
+    
+    if (ids.length === 0) {
+        alert('Pilih minimal 1 buku untuk dihapus');
+        return;
+    }
+    
+    if (confirm(`Yakin ingin menghapus ${ids.length} buku yang dipilih?`)) {
+        document.getElementById('selectedIds').value = JSON.stringify(ids);
+        document.getElementById('massDeleteForm').submit();
+    }
+}
+</script>
+@endpush
+
 @endsection
-</body>
-</html>
 
 <style>
 @keyframes fade-in {

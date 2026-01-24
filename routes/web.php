@@ -1,11 +1,15 @@
 <?php
 
 use App\Enums\UserRole;
+use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BookController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\FineController;
+use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\TransactionController;
+use App\Http\Controllers\TripayCallbackController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -35,8 +39,17 @@ Route::resource('products', ProductController::class)->except('show');
 Route::middleware('auth')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
     Route::get('/dashboard', [AuthController::class, 'dashboard'])->name('dashboard');
+    Route::get('/users/dashboard', [AuthController::class, 'userDashboard'])->name('users.dashboard');
 
     Route::get('books', [BookController::class, 'index'])->name('books.index');
+
+    Route::get('transactions', [TransactionController::class, 'index'])->name('transactions.index');
+    Route::get('transactions/create', [TransactionController::class, 'create'])->name('transactions.create');
+    Route::post('transactions', [TransactionController::class, 'store'])->name('transactions.store');
+    Route::get('transactions/{transaction}', [TransactionController::class, 'show'])->name('transactions.show');
+    Route::post('tripay/callback', [TripayCallbackController::class, 'handle']);
+    Route::post('/payment/checkout', [PaymentController::class, 'checkout']);
+
     
     /*
     |--------------------------------------------------------------------------
@@ -52,8 +65,54 @@ Route::middleware('auth')->group(function () {
         
         Route::get('books-trash', [BookController::class, 'trash'])->name('books.trash');
         Route::put('books/{id}/restore', [BookController::class, 'restore'])->name('books.restore');
-
+        
         Route::resource('categories', CategoryController::class);
+        Route::get('/audit-logs', [AuditLogController::class, 'index'])->name('audit.index');
+        
+        Route::post('transactions/admin', [TransactionController::class, 'storeAdmin'])->name('transactions.store.admin');
+        Route::delete('transactions/{transaction}', [TransactionController::class, 'destroy'])->name('transactions.destroy');
+        
+        // Transaction Trash & Restore
+        Route::get('transactions/{transaction}/edit', [TransactionController::class, 'edit'])->name('transactions.edit');
+        Route::put('transactions/{transaction}', [TransactionController::class, 'update'])->name('transactions.update');
+        Route::get('transactions-trash', [TransactionController::class, 'trash'])->name('transactions.trash');
+        Route::put('transactions/{id}/restore', [TransactionController::class, 'restore'])->name('transactions.restore');
+        Route::post('transactions/{transaction}/confirm-return', [TransactionController::class, 'confirmReturn'])->name('confirm-return');
+        Route::get('transactions/{transaction}/inspect', [TransactionController::class, 'inspect'])->name('transactions.inspect');
+        Route::post('transactions/{transaction}/inspect', [TransactionController::class, 'inspectStore'])->name('transactions.inspect.store');
+         Route::get('users', [AuthController::class, 'index'])
+        ->name('users.index');
+
+        Route::get('users/create', [AuthController::class, 'create'])
+            ->name('users.create');
+
+        Route::post('users', [AuthController::class, 'store'])
+            ->name('users.store');
+
+        Route::get('users/{user}', [AuthController::class, 'show'])
+            ->name('users.show');
+
+        Route::get('users/{user}/edit', [AuthController::class, 'edit'])
+            ->name('users.edit');
+
+        Route::put('users/{user}', [AuthController::class, 'update'])
+            ->name('users.update');
+
+        Route::delete('users/{user}', [AuthController::class, 'destroy'])
+            ->name('users.destroy');
+        Route::delete('/categories/mass-delete', [CategoryController::class, 'massDelete'])
+            ->name('categories.mass-delete');
+        Route::delete('/books/mass-delete', [BookController::class, 'massDelete'])
+            ->name('books.mass-delete');
+        Route::get('admin/fines', [FineController::class, 'adminIndex'])
+            ->name('admin.fines.index');
+
+        Route::post('fines/{fine}/paid', [FineController::class, 'markPaid'])
+            ->name('fines.paid');
+        Route::post('fines/{fine}/confirm', [FineController::class, 'confirmPayment'])
+            ->name('fines.confirm');
+        Route::post('fines/{fine}/reject', [FineController::class, 'rejectPayment'])
+            ->name('fines.reject');
     });
 
     Route::get('books/{book}', [BookController::class, 'show'])->name('books.show');
@@ -64,6 +123,10 @@ Route::middleware('auth')->group(function () {
     |--------------------------------------------------------------------------
     */
     Route::middleware(['role:' . UserRole::USER->value])->group(function () {
-        Route::resource('transactions', TransactionController::class);
+        Route::post('{id}/request-return',[TransactionController::class, 'requestReturn'])->name('request-return');
+         Route::get('/my-fines', [FineController::class, 'index'])
+        ->name('fines.index');
+        Route::post('fines/{fine}/pay', [FineController::class, 'pay'])
+        ->name('fines.pay');
     });
 });

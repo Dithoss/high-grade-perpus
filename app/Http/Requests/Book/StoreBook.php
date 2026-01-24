@@ -24,7 +24,7 @@ class StoreBook extends FormRequest
         return [
             'name' => 'required|string|max:255',
             'writer' => 'required|string|max:255',
-            'category_id' => 'sometimes|uuid|exists:categories,id',
+            'category_id' => 'sometimes|exists:categories,id',
             'stock' => 'required|integer|min:0',
             'image' => 'nullable|image|mimes:jpg,png,jpeg|max:2840',
             'barcode' => 'nullable|string|unique:books,barcode'
@@ -33,7 +33,6 @@ class StoreBook extends FormRequest
     public function messages():array
     {
         return [
-            'name.required' => 'Nama buku wajib diisi.',
             'writer.required' => 'Penulis wajib diisi.',
             'category_id.required' => 'Kategori wajib dipilih.',
             'category_id.exists' => 'Kategori tidak valid.',

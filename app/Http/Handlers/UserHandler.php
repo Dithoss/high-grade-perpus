@@ -128,9 +128,6 @@ class UserHandler
         }
 
         $user = $this->authInterface->store($data);
-
-        $user->assignRole('customer');
-
         return $user;
     }
 

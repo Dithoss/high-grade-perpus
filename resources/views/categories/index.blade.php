@@ -4,7 +4,7 @@
 
 @section('content')
 <div class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-8">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div>
         
         {{-- Flash Messages --}}
         @if (session('success'))
@@ -44,13 +44,28 @@
             </div>
 
             @role('admin')
-                <a href="{{ route('categories.create') }}" 
-                   class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-medium rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-                    </svg>
-                    Tambah Kategori
-                </a>
+                <div class="flex gap-3">
+                    <button
+                        id="massDeleteBtn"
+                        onclick="massDeleteSelected()"
+                        class="hidden items-center px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg shadow-lg hover:shadow-xl transition-all duration-200"
+                    >
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                        </svg>
+                        Hapus (<span id="selectedCount">0</span>)
+                    </button>
+
+                    <button
+                        onclick="openCreateModal()"
+                        class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-medium rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5"
+                    >
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                        </svg>
+                        Tambah Kategori
+                    </button>
+                </div>
             @endrole
         </div>
 
@@ -106,6 +121,11 @@
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gradient-to-r from-gray-50 to-gray-100">
                         <tr>
+                            @role('admin')
+                            <th class="px-6 py-4 text-left">
+                                <input type="checkbox" id="selectAll" onclick="toggleSelectAll()" class="w-4 h-4 text-purple-600 rounded focus:ring-2 focus:ring-purple-500">
+                            </th>
+                            @endrole
                             <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                                 <div class="flex items-center space-x-2">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -153,6 +173,11 @@
                     <tbody class="bg-white divide-y divide-gray-200">
                         @forelse ($categories as $category)
                             <tr class="hover:bg-gradient-to-r hover:from-purple-50 hover:to-transparent transition-all duration-150">
+                                @role('admin')
+                                <td class="px-6 py-4">
+                                    <input type="checkbox" class="category-checkbox w-4 h-4 text-purple-600 rounded focus:ring-2 focus:ring-purple-500" value="{{ $category->id }}" onclick="updateSelectedCount()">
+                                </td>
+                                @endrole
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-600">
                                     {{ $loop->iteration + $categories->firstItem() - 1 }}
                                 </td>
@@ -215,7 +240,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="{{ auth()->user()->hasRole('admin') ? '5' : '4' }}" class="px-6 py-12 text-center">
+                                <td colspan="{{ auth()->user()->hasRole('admin') ? '6' : '4' }}" class="px-6 py-12 text-center">
                                     <svg class="mx-auto h-16 w-16 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
                                     </svg>
@@ -232,6 +257,12 @@
             <div class="md:hidden divide-y divide-gray-200">
                 @forelse ($categories as $category)
                     <div class="p-4 hover:bg-purple-50 transition-colors duration-150">
+                        @role('admin')
+                        <div class="flex items-center mb-3">
+                            <input type="checkbox" class="category-checkbox w-4 h-4 text-purple-600 rounded focus:ring-2 focus:ring-purple-500 mr-3" value="{{ $category->id }}" onclick="updateSelectedCount()">
+                        </div>
+                        @endrole
+                        
                         <div class="flex items-start justify-between mb-3">
                             <div class="flex items-center flex-1">
                                 <div class="flex-shrink-0 h-12 w-12 bg-gradient-to-br from-purple-400 to-indigo-500 rounded-lg flex items-center justify-center shadow-md">
@@ -302,7 +333,140 @@
     </div>
 </div>
 
-@push('styles')
+{{-- Mass Delete Form --}}
+<form id="massDeleteForm" action="{{ route('categories.mass-delete') }}" method="POST" class="hidden">
+    @csrf
+    @method('DELETE')
+    <input type="hidden" name="ids" id="selectedIds">
+</form>
+
+{{-- Create Modal --}}
+<div
+    id="createCategoryModal"
+    class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm flex items-center justify-center px-4"
+>
+    <div class="bg-white w-full max-w-2xl rounded-2xl shadow-2xl animate-fade-in">
+        <div class="flex items-center justify-between px-8 py-6 border-b bg-gradient-to-r from-purple-50 to-indigo-50 rounded-t-2xl">
+            <div>
+                <h2 class="text-2xl font-bold text-gray-900">Tambah Kategori</h2>
+                <p class="text-sm text-gray-600 mt-1">
+                    Buat kategori baru untuk pengelompokan buku
+                </p>
+            </div>
+
+            <button
+                onclick="closeCreateModal()"
+                class="w-10 h-10 flex items-center justify-center rounded-full bg-white shadow hover:bg-gray-100 transition"
+            >
+                <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+
+        <form action="{{ route('categories.store') }}" method="POST" class="px-8 py-6 space-y-6">
+            @csrf
+
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">
+                    Nama Kategori <span class="text-red-500">*</span>
+                </label>
+
+                <input
+                    type="text"
+                    name="name"
+                    required
+                    placeholder="Contoh: Teknologi, Sejarah, Fiksi"
+                    class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition"
+                >
+
+                <p class="text-xs text-gray-500 mt-2">
+                    Gunakan nama singkat dan mudah dipahami
+                </p>
+            </div>
+
+            <div class="flex items-center justify-end gap-4 pt-6 border-t">
+                <button
+                    type="button"
+                    onclick="closeCreateModal()"
+                    class="px-6 py-2.5 rounded-xl bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium transition"
+                >
+                    Batal
+                </button>
+
+                <button
+                    type="submit"
+                    class="px-7 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-semibold shadow-lg transition"
+                >
+                    Simpan Kategori
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@push('scripts')
+<script>
+function openCreateModal() {
+    document.getElementById('createCategoryModal').classList.remove('hidden');
+}
+
+function closeCreateModal() {
+    document.getElementById('createCategoryModal').classList.add('hidden');
+}
+
+function toggleSelectAll() {
+    const selectAll = document.getElementById('selectAll');
+    const checkboxes = document.querySelectorAll('.category-checkbox');
+    
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = selectAll.checked;
+    });
+    
+    updateSelectedCount();
+}
+
+function updateSelectedCount() {
+    const checkboxes = document.querySelectorAll('.category-checkbox:checked');
+    const count = checkboxes.length;
+    const massDeleteBtn = document.getElementById('massDeleteBtn');
+    const selectedCount = document.getElementById('selectedCount');
+    const selectAll = document.getElementById('selectAll');
+    
+    selectedCount.textContent = count;
+    
+    if (count > 0) {
+        massDeleteBtn.classList.remove('hidden');
+        massDeleteBtn.classList.add('inline-flex');
+    } else {
+        massDeleteBtn.classList.add('hidden');
+        massDeleteBtn.classList.remove('inline-flex');
+    }
+    
+    // Update "Select All" checkbox state
+    const allCheckboxes = document.querySelectorAll('.category-checkbox');
+    if (selectAll) {
+        selectAll.checked = count === allCheckboxes.length && count > 0;
+    }
+}
+
+function massDeleteSelected() {
+    const checkboxes = document.querySelectorAll('.category-checkbox:checked');
+    const ids = Array.from(checkboxes).map(cb => cb.value);
+    
+    if (ids.length === 0) {
+        alert('Pilih minimal 1 kategori untuk dihapus');
+        return;
+    }
+    
+    if (confirm(`Yakin ingin menghapus ${ids.length} kategori yang dipilih?`)) {
+        document.getElementById('selectedIds').value = JSON.stringify(ids);
+        document.getElementById('massDeleteForm').submit();
+    }
+}
+</script>
+@endpush
+
 <style>
 @keyframes fade-in {
     from {
@@ -319,5 +483,5 @@
     animation: fade-in 0.3s ease-out;
 }
 </style>
-@endpush
+
 @endsection
