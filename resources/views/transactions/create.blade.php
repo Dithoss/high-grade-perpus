@@ -21,6 +21,25 @@
 
     <!-- Form Card -->
     <div class="bg-white rounded-b-xl shadow-lg p-8">
+        @php
+            $preselectedBookId = request('book_id');
+            $preselectedBook = $preselectedBookId ? \App\Models\Book::find($preselectedBookId) : null;
+        @endphp
+
+        @if($preselectedBook)
+        <div class="mb-6 bg-blue-50 border-l-4 border-blue-500 p-4 rounded-lg">
+            <div class="flex items-center">
+                <svg class="w-6 h-6 text-blue-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <div>
+                    <p class="text-blue-800 font-medium">Buku yang akan dipinjam:</p>
+                    <p class="text-blue-900 font-bold">{{ $preselectedBook->name }}</p>
+                </div>
+            </div>
+        </div>
+        @endif
+
         <form method="POST" action="{{ route('transactions.store') }}" class="space-y-6" id="transactionForm">
             @csrf
 
@@ -127,12 +146,16 @@
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Buku</label>
                                 <select 
                                     name="items[0][book_id]" 
-                                    class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all outline-none"
+                                    class="book-select w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all outline-none"
                                     required
                                 >
                                     <option value="">Pilih buku</option>
                                     @foreach(\App\Models\Book::where('stock', '>', 0)->get() as $book)
-                                        <option value="{{ $book->id }}" data-stock="{{ $book->stock }}">
+                                        <option 
+                                            value="{{ $book->id }}" 
+                                            data-stock="{{ $book->stock }}"
+                                            {{ $preselectedBookId == $book->id ? 'selected' : '' }}
+                                        >
                                             {{ $book->name }} - Stok: {{ $book->stock }}
                                         </option>
                                     @endforeach
@@ -252,6 +275,19 @@ document.addEventListener('DOMContentLoaded', function() {
         const borrowedDate = new Date(this.value);
         borrowedDate.setDate(borrowedDate.getDate() + 1);
         dueInput.min = borrowedDate.toISOString().split('T')[0];
+    });
+
+    // Add stock validation
+    document.addEventListener('change', function(e) {
+        if (e.target.classList.contains('book-select')) {
+            const selectedOption = e.target.options[e.target.selectedIndex];
+            const stock = parseInt(selectedOption.dataset.stock || 0);
+            const quantityInput = e.target.closest('.book-item').querySelector('[name$="[quantity]"]');
+            
+            if (stock > 0) {
+                quantityInput.max = stock;
+            }
+        }
     });
 });
 </script>

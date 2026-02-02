@@ -113,7 +113,6 @@ class TransactionController extends Controller
                 abort(403, 'Anda tidak memiliki akses ke transaksi ini');
             }
             
-            // Only damaged and lost statuses are truly final
             if (in_array($transaction->status, ['damaged', 'lost'])) {
                 abort(403, 'Transaksi sudah final dan tidak dapat diubah');
             }
@@ -121,7 +120,6 @@ class TransactionController extends Controller
             $oldStatus = $transaction->status;
             $updateData = ['status' => $request->status];
 
-            // If changing to returned, set the timestamp
             if ($request->status === 'returned' && !$transaction->returned_at) {
                 $updateData['returned_at'] = now();
             }
@@ -136,7 +134,6 @@ class TransactionController extends Controller
                 'description' => "Status transaksi diubah dari {$oldStatus} ke {$request->status}",
             ]);
 
-            // If admin marks as returned, redirect to inspection
             if ($request->status === 'returned' && auth()->user()->hasRole('admin')) {
                 return redirect()
                     ->route('transactions.inspect', $id)
@@ -182,21 +179,20 @@ class TransactionController extends Controller
             return back()->with('error', 'Transaksi tidak dalam status pengajuan pengembalian');
         }
 
-        // Update to returned and set returned_at
         $this->repo->update($id, [
             'status' => 'returned',
-            'returned_at' => now()
+            'returned_at' => now(),
+            
         ]);
 
-        // Check for late days and create fine if needed
         $lateDays = max(0, now()->diffInDays($transaction->due_at, false));
         
         if ($lateDays > 0) {
-            \App\Models\Fine::create([
+            Fine::create([
                 'transaction_id' => $transaction->id,
                 'type' => 'late',
                 'late_days' => $lateDays,
-                'amount' => $lateDays * 5000, // Rp 5.000 per day
+                'amount' => $lateDays * 5000, 
                 'status' => 'unpaid',
                 'note' => "Denda keterlambatan {$lateDays} hari"
             ]);
@@ -266,7 +262,6 @@ class TransactionController extends Controller
                 'status' => 'unpaid',
             ]);
 
-            // Update transaction status
             $transaction->update([
                 'status' => $request->condition,
                 'inspection_note' => $request->note,
@@ -319,6 +314,19 @@ class TransactionController extends Controller
             'target_type' => Transaction::class,
             'target_id'   => $id,
             'description' => 'Restore transaksi',
+        ]);
+
+        return back()->with('success', 'Transaksi berhasil dipulihkan');
+    }
+    public function forceDelete(string $id)
+    {
+        $this->repo->forceDelete($id);
+        AuditLog::create([
+            'user_id'     => auth()->id(),
+            'action'      => 'force delete',
+            'target_type' => Transaction::class,
+            'target_id'   => $id,
+            'description' => 'Hapus Permanen transaksi',
         ]);
 
         return back()->with('success', 'Transaksi berhasil dipulihkan');

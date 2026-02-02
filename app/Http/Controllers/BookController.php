@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Contracts\Interface\BookInterface;
 use App\Contracts\Interface\CategoryInterface;
+use App\Contracts\Repositories\AlgorithmRepository;
 use App\Http\Handlers\BookHandler;
 use App\Http\Requests\Book\StoreBook;
 use App\Http\Requests\Book\UpdateBook;
@@ -17,7 +18,9 @@ class BookController extends Controller
     public function __construct(
         protected BookInterface $repo,
         protected BookHandler $handler,
-        protected CategoryInterface $Crepo
+        protected CategoryInterface $Crepo,
+        protected AlgorithmRepository $algorithm
+
     ) {}
 
     public function index(Request $request)
@@ -27,6 +30,10 @@ class BookController extends Controller
         ]);
 
         $book = $this->repo->getWithFilters($filters);
+        if (auth()->check() && auth()->user()->hasRole('user')) {
+            return view('books.index-user', compact('book'));
+        }
+
 
         return view('books.index', compact('book'));
     }
@@ -45,16 +52,32 @@ class BookController extends Controller
             ->route('books.index')
             ->with('success', __('Berhasil Ditambahkan'));
     }
-    public function show(string $id)
+    public function show(string $slug)
     {
         try {
-            $book = $this->repo->findById($id);
+            $book = $this->repo->findBySlug($slug);
+            
+            if (auth()->check()) {
+                $this->algorithm->logView(auth()->id(), $book->id);
+            }
 
-            return view('books.show', compact('book'));
+            $relatedBooks = $this->algorithm->relatedByCategory($book, 6);
+
+            return view('books.show', compact('book', 'relatedBooks'));
         } catch (ModelNotFoundException) {
             abort(404);
         }
     }
+
+
+
+    public function related(Book $book)
+    {
+        $relatedBooks = $this->algorithm->relatedByCategory($book);
+
+        return response()->json($relatedBooks);
+    }
+
 
 
     public function edit(string $id)

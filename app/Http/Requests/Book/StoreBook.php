@@ -27,7 +27,7 @@ class StoreBook extends FormRequest
             'category_id' => 'sometimes|exists:categories,id',
             'stock' => 'required|integer|min:0',
             'image' => 'nullable|image|mimes:jpg,png,jpeg|max:2840',
-            'barcode' => 'nullable|string|unique:books,barcode'
+            'barcode' => 'nullable|string|unique:books,barcode|regex:/^BK-/'
         ];
     }
     public function messages():array
@@ -40,7 +40,9 @@ class StoreBook extends FormRequest
             'stock.integer' => 'Stok harus berupa angka.',
             'stock.min' => 'Stok tidak boleh kurang dari 0.',
             'image.max' => 'Size maksimal 2MB',
-            'image.mimes' => 'Format JPG dan PNG'
+            'image.mimes' => 'Format JPG dan PNG',
+            'barcode.regex' => 'Barkode harus diawali dengan BK'
+
         ];
     }
 }

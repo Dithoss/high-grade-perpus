@@ -14,6 +14,7 @@ use App\Http\Requests\Auth\RegisterRequest;
 use App\Services\UserService;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class AuthController extends Controller
 {
@@ -184,20 +185,29 @@ class AuthController extends Controller
         }
     }
 
+
     public function update(UpdateUserRequest $request, string $id)
     {
         try {
             $this->authHandler->updateCustomer($id, $request->validated());
 
+            $user = Auth::user();
+
+            $redirectRoute = $user->hasRole('admin')
+                ? 'dashboard'
+                : 'users.dashboard';
+
             return redirect()
-                ->route('users.index')
+                ->route($redirectRoute)
                 ->with('success', __('alert.update_success'));
+
         } catch (ModelNotFoundException $e) {
             abort(404);
         } catch (\Throwable $e) {
             return back()->withErrors(__('alert.update_failed'))->withInput();
         }
     }
+
 
     public function destroy(string $id)
     {

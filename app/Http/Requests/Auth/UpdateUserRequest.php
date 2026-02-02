@@ -32,23 +32,31 @@ class UpdateUserRequest extends FormRequest
                     $this->route('id') ?? $this->route('user_panel') ?? $this->route('user')
                 ),
             ],
-            'gender' => 'sometimes|string',
-            'birthDate' => 'sometimes|date',
-            'address' => 'sometimes|string',
-            'phone_number' => 'sometimes|string',
-            'password' => 'sometimes|string|min:8',
-            'image' => 'sometimes|nullable|image|mimes:jpg,png,jpeg|max:2893',
+            'password' => 'nullable|string|min:8', // Changed from 'sometimes' to 'nullable'
+            'image' => 'nullable|image|mimes:jpg,png,jpeg|max:2893',
         ];
     }
 
     public function messages()
     {
         return [
-            'name.min' => 'Nama minimal 6.',
+            'name.min' => 'Nama minimal 3 karakter.',
             'email.email' => 'Format email tidak valid.',
             'email.unique' => 'Email sudah digunakan.',
             'password.min' => 'Kata sandi minimal 8 karakter.',
-            'image.image' => 'Image harus berupa gambar',
+            'image.image' => 'File harus berupa gambar.',
+            'image.mimes' => 'Format gambar harus JPG, PNG, atau JPEG.',
+            'image.max' => 'Ukuran gambar maksimal 2.8 MB.',
         ];
+    }
+
+    /**
+     * Prepare the data for validation.
+     */
+    protected function prepareForValidation(): void
+    {
+        if ($this->password === null || $this->password === '') {
+            $this->request->remove('password');
+        }
     }
 }

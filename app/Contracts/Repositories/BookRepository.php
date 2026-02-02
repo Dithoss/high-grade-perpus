@@ -24,7 +24,6 @@ class BookRepository implements BookInterface
     {
         return $this->model->create($data);
     }
-
     public function update(mixed $id, array $data): Book
     {
         $Book = $this->findById($id);
@@ -81,14 +80,17 @@ class BookRepository implements BookInterface
     }
     public function findBySlug(string|int $slug): Book
     {
-        $query = $this->model->newQuery();
-        $model = $query->where('slug', $slug)->first();
+        $model = $this->model
+            ->where('slug', $slug)
+            ->first();
+
         if (!$model) {
             throw new ModelNotFoundException('Book not found');
         }
 
         return $model;
     }
+
     public function searchTrashed(string $keyword, int $perPage = 15)
     {
         return $this->model->onlyTrashed()

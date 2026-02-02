@@ -15,11 +15,20 @@ class Book extends Model
     use HasFactory, Notifiable, HasUuids, SoftDeletes;
     protected $fillable = [
         'name', 'barcode', 'stock', 'writer', 'category_id','slug', 'image'];
+
+    protected $guarded = [];
+    public function getRouteKeyName(): string
+    {
+        return 'slug';
+    }
     public function transactions()
     {
         return $this->hasMany(Transaction::class);
     }
     public function category(){
         return $this->belongsTo(Category::class);
+    }
+    public function views(){
+        return $this->hasMany(Algorithm::class);
     }
 }

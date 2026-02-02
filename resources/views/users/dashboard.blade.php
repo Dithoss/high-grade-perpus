@@ -3,7 +3,6 @@
 @section('title', 'Dashboard')
 
 @section('content')
-{{-- resources/views/dashboard/user.blade.php --}}
 <div class="min-h-screen bg-gray-50">
     {{-- Success Message --}}
     @if (session('success'))
@@ -18,7 +17,7 @@
     @endif
 
     {{-- Hero Banner --}}
-    <div class="bg-gradient-to-r from-blue-500 via-blue-600 to-red-500 text-white px-6 py-12 mb-6">
+    <div class="bg-gradient-to-r from-blue-500 via-blue-600 to-indigo-600 text-white px-6 py-12 mb-6 rounded-xl shadow-xl">
         <div class="max-w-7xl mx-auto">
             <div class="flex items-center justify-between">
                 <div>
@@ -114,6 +113,57 @@
             </div>
         </div>
 
+        {{-- Personalized Recommendations --}}
+        @php
+            $personalizedBooks = app(\App\Contracts\Repositories\AlgorithmRepository::class)
+                ->personalized(auth()->id(), 6);
+        @endphp
+
+        @if($personalizedBooks->isNotEmpty())
+        <div class="bg-white rounded-lg shadow-sm p-6 mb-8 border border-gray-100">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-bold text-gray-900 flex items-center">
+                    <svg class="w-6 h-6 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/>
+                    </svg>
+                    Rekomendasi Untuk Anda
+                </h2>
+                <a href="{{ route('books.index') }}" class="text-purple-600 hover:text-purple-700 text-sm font-medium">
+                    Lihat Semua →
+                </a>
+            </div>
+
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                @foreach($personalizedBooks as $recBook)
+                <a href="{{ route('books.show', $recBook->slug) }}" class="group">
+                    <div class="bg-white rounded-lg shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden transform hover:-translate-y-1">
+                        <div class="aspect-[3/4] bg-gradient-to-br from-purple-100 to-indigo-100 flex items-center justify-center overflow-hidden">
+                            @if($recBook->image)
+                                <img src="{{ asset('storage/' . $recBook->image) }}" alt="{{ $recBook->name }}" class="object-cover w-full h-full group-hover:scale-110 transition-transform duration-300">
+                            @else
+                                <svg class="w-12 h-12 text-purple-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                                </svg>
+                            @endif
+                        </div>
+                        <div class="p-3">
+                            <h3 class="text-sm font-medium text-gray-900 line-clamp-2 mb-1 group-hover:text-purple-600">
+                                {{ $recBook->name }}
+                            </h3>
+                            <p class="text-xs text-gray-500">{{ $recBook->category?->name ?? 'Uncategorized' }}</p>
+                            <div class="flex items-center mt-1">
+                                <span class="text-xs {{ $recBook->stock > 0 ? 'text-green-600' : 'text-red-600' }}">
+                                    {{ $recBook->stock > 0 ? 'Tersedia' : 'Habis' }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+                @endforeach
+            </div>
+        </div>
+        @endif
+
         {{-- Quick Actions --}}
         <div class="bg-white rounded-lg shadow-sm p-6 mb-8 border border-gray-100">
             <h2 class="text-xl font-bold text-gray-900 mb-4 flex items-center">
@@ -183,26 +233,27 @@
                 <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
                     @foreach($recentBooks as $book)
                     <a href="{{ route('books.show', $book->id) }}" class="group">
-                        <div class="bg-gray-100 rounded-lg aspect-square flex items-center justify-center mb-2 overflow-hidden group-hover:shadow-md transition-shadow">
-                            <div class="bg-gray-100 rounded-lg aspect-square flex items-center justify-center mb-2 overflow-hidden group-hover:shadow-md transition-shadow">
+                        <div class="bg-white rounded-lg shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden transform hover:-translate-y-1">
+                            <div class="aspect-[3/4] bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center overflow-hidden">
                                 @if($book->image)
-                                    <img src="{{ asset('storage/' . $book->image) }}" alt="{{ $book->name }}" class="object-cover w-full h-full">
+                                    <img src="{{ asset('storage/' . $book->image) }}" alt="{{ $book->name }}" class="object-cover w-full h-full group-hover:scale-110 transition-transform duration-300">
                                 @else
                                     <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
                                     </svg>
                                 @endif
                             </div>
-
-                        </div>
-                        <h3 class="text-sm font-medium text-gray-900 line-clamp-2 mb-1 group-hover:text-blue-600">
-                            {{ $book->name }}
-                        </h3>
-                        <p class="text-xs text-gray-500">{{ $book->category?->name ?? 'Uncategorized' }}</p>
-                        <div class="flex items-center mt-1">
-                            <span class="text-xs {{ $book->stock > 0 ? 'text-green-600' : 'text-red-600' }}">
-                                {{ $book->stock > 0 ? 'Tersedia' : 'Habis' }}
-                            </span>
+                            <div class="p-3">
+                                <h3 class="text-sm font-medium text-gray-900 line-clamp-2 mb-1 group-hover:text-blue-600">
+                                    {{ $book->name }}
+                                </h3>
+                                <p class="text-xs text-gray-500">{{ $book->category?->name ?? 'Uncategorized' }}</p>
+                                <div class="flex items-center mt-1">
+                                    <span class="text-xs {{ $book->stock > 0 ? 'text-green-600' : 'text-red-600' }}">
+                                        {{ $book->stock > 0 ? 'Tersedia' : 'Habis' }}
+                                    </span>
+                                </div>
+                            </div>
                         </div>
                     </a>
                     @endforeach

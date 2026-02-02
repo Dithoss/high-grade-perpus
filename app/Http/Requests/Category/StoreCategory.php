@@ -22,13 +22,14 @@ class StoreCategory extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => 'required|string'
+            'name' => 'required|string|unique:categories,name'
         ];
     }
     public function messages():array
     {
         return [
-            'name.string' => 'Nama wajib diisi'
+            'name.string' => 'Nama wajib diisi',
+            'name.unique' => 'Kategori sudah ada'
         ];
     }
 }

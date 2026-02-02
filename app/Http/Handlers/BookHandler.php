@@ -11,17 +11,26 @@ class BookHandler
         protected BookInterface $repo,
     ) {}
 
-    public function create(array $data): book
+    public function create(array $data): Book
     {
-        if (isset($data['image']) && $data['image']) {
-            $imagePath = UploadHelper::uploadImage($data['image'], 'book');
-            $data['image'] = $imagePath;
-        }
+        return DB::transaction(function () use ($data) {
 
-        $user = $this->repo->store($data);
+            $book = Book::where('name', $data['name'])
+                ->where('category_id', $data['category_id'])
+                ->lockForUpdate()
+                ->first();
 
+            if ($book) {
+                $book->increment('stock', $data['stock']);
+                return $book;
+            }
 
-        return $user;
+            if (!empty($data['image'])) {
+                $data['image'] = UploadHelper::uploadImage($data['image'], 'book');
+            }
+
+            return $this->repo->store($data);
+        });
     }
 
     public function update(string $id, array $data): Book

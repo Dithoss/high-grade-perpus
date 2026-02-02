@@ -22,7 +22,7 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="text-center bg-indigo-50 border border-indigo-200 rounded-xl p-6">
                 <p class="text-sm text-gray-600 mb-1">Nomor Transaksi</p>
-                <p class="text-2xl font-mono font-bold text-indigo-600">#{{ $transaction->id }}</p>
+                <p class="text-2xl font-mono font-bold text-indigo-600">#{{ $transaction->receipt_number }}</p>
             </div>
 
             <div class="text-center rounded-xl p-6 {{ 

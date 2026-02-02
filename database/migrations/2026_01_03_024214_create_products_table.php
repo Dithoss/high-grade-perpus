@@ -21,6 +21,8 @@ return new class extends Migration
             $table->uuid('category_id')->nullable();
             $table->foreign('category_id')->references('id')->on('categories')->onDelete('set null');
             $table->string('barcode')->unique();
+            $table->unique(['name', 'category_id']);
+
             $table->timestamps();
         });
     }

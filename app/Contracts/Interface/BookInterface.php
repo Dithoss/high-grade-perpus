@@ -17,5 +17,4 @@ interface BookInterface
     public function paginate(int $pagination = 10):LengthAwarePaginator;
     public function findBySlug(string|int $slug): Book;
     public function searchTrashed(string $keyword, int $perPage = 15);
-
 }

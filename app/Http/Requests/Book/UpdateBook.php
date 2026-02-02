@@ -27,7 +27,7 @@ class UpdateBook extends FormRequest
             'category_id' => 'sometimes|uuid|exists:categories,id',
             'stock' => 'sometimes|integer|min:0',
             'image' => 'nullable|image|mimes:jpg,png,jpeg|max:2840',
-            'barcode' => 'nullable|string|unique:books,barcode'
+            'barcode' => 'nullable|string|unique:books,barcode|regex:/^BK-^/'
 
         ];
     }
@@ -37,6 +37,7 @@ class UpdateBook extends FormRequest
             'category_id.exists' => 'Kategori tidak valid.',
             'stock.integer' => 'Stok harus berupa angka.',
             'stock.min' => 'Stok tidak boleh kurang dari 0.',
+            'barcode.regex' => 'Barkode harus diawali dengan BK'
         ];
     }
 }

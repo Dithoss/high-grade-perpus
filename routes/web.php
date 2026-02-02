@@ -12,6 +12,10 @@ use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\TripayCallbackController;
 use Illuminate\Support\Facades\Route;
 
+Route::get('/', function () {
+    return view('welcome');
+});
+
 /*
 |--------------------------------------------------------------------------
 | AUTH (SESSION BASED)
@@ -42,6 +46,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/users/dashboard', [AuthController::class, 'userDashboard'])->name('users.dashboard');
 
     Route::get('books', [BookController::class, 'index'])->name('books.index');
+    Route::get('books/{book:slug}', [BookController::class, 'show'])->name('books.show');
+
 
     Route::get('transactions', [TransactionController::class, 'index'])->name('transactions.index');
     Route::get('transactions/create', [TransactionController::class, 'create'])->name('transactions.create');
@@ -57,6 +63,10 @@ Route::middleware('auth')->group(function () {
     |--------------------------------------------------------------------------
     */
     Route::middleware(['role:' . UserRole::ADMIN->value])->group(function () {
+        Route::delete('/categories/mass-delete', [CategoryController::class, 'massDelete'])
+            ->name('categories.mass-delete');
+        Route::delete('/books/mass-delete', [BookController::class, 'massDelete'])
+            ->name('books.mass-delete');
         Route::get('books/create', [BookController::class, 'create'])->name('books.create');
         Route::post('books', [BookController::class, 'store'])->name('books.store');
         Route::get('books/{book}/edit', [BookController::class, 'edit'])->name('books.edit');
@@ -80,6 +90,8 @@ Route::middleware('auth')->group(function () {
         Route::post('transactions/{transaction}/confirm-return', [TransactionController::class, 'confirmReturn'])->name('confirm-return');
         Route::get('transactions/{transaction}/inspect', [TransactionController::class, 'inspect'])->name('transactions.inspect');
         Route::post('transactions/{transaction}/inspect', [TransactionController::class, 'inspectStore'])->name('transactions.inspect.store');
+        Route::delete('transactions/{id}/force-delete', [TransactionController::class, 'forceDelete'])->name('transactions.force-delete');
+
          Route::get('users', [AuthController::class, 'index'])
         ->name('users.index');
 
@@ -89,21 +101,10 @@ Route::middleware('auth')->group(function () {
         Route::post('users', [AuthController::class, 'store'])
             ->name('users.store');
 
-        Route::get('users/{user}', [AuthController::class, 'show'])
-            ->name('users.show');
 
-        Route::get('users/{user}/edit', [AuthController::class, 'edit'])
-            ->name('users.edit');
-
-        Route::put('users/{user}', [AuthController::class, 'update'])
-            ->name('users.update');
 
         Route::delete('users/{user}', [AuthController::class, 'destroy'])
             ->name('users.destroy');
-        Route::delete('/categories/mass-delete', [CategoryController::class, 'massDelete'])
-            ->name('categories.mass-delete');
-        Route::delete('/books/mass-delete', [BookController::class, 'massDelete'])
-            ->name('books.mass-delete');
         Route::get('admin/fines', [FineController::class, 'adminIndex'])
             ->name('admin.fines.index');
 
@@ -114,8 +115,14 @@ Route::middleware('auth')->group(function () {
         Route::post('fines/{fine}/reject', [FineController::class, 'rejectPayment'])
             ->name('fines.reject');
     });
+    
+    Route::get('users/{user}', [AuthController::class, 'show'])
+        ->name('users.show');
+    Route::get('users/{user}/edit', [AuthController::class, 'edit'])
+        ->name('users.edit');
+    Route::put('users/{user}', [AuthController::class, 'update'])
+            ->name('users.update');
 
-    Route::get('books/{book}', [BookController::class, 'show'])->name('books.show');
 
     /*
     |--------------------------------------------------------------------------
@@ -128,5 +135,7 @@ Route::middleware('auth')->group(function () {
         ->name('fines.index');
         Route::post('fines/{fine}/pay', [FineController::class, 'pay'])
         ->name('fines.pay');
+        Route::get('/books/{book}/related', [BookController::class, 'related'])
+        ->name('books.related');
     });
 });

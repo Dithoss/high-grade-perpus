@@ -201,7 +201,8 @@
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-center">
                                     <div class="flex items-center justify-center space-x-2">
-                                        <a href="{{ route('books.show', $item->id) }}" 
+                                        {{-- ✅ FIXED: Using slug instead of id --}}
+                                        <a href="{{ route('books.show', $item->slug) }}" 
                                            class="inline-flex items-center px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-xs font-medium rounded-md transition-colors duration-150">
                                             <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
@@ -283,11 +284,11 @@
                         </div>
 
                         <div class="flex flex-wrap gap-2">
-                            <a href="{{ route('books.show', $item->id) }}" 
-                               class="flex-1 text-center px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium rounded-md transition-colors">
+                            <a href="{{ route('books.show', $item->slug) }}" 
+                            class="flex-1 text-center px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium rounded-md transition-colors">
                                 Detail
                             </a>
-                            
+
                             @role('admin')
                                 <a href="{{ route('books.edit', $item->id) }}" 
                                    class="flex-1 text-center px-3 py-2 bg-amber-500 hover:bg-amber-600 text-white text-sm font-medium rounded-md transition-colors">

@@ -196,6 +196,4 @@ class TransactionRepository implements TransactionInterface
             'returned_at' => now(),
         ]);
     }
-
-
 }

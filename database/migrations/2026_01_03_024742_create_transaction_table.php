@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('transactions', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->uuid('user_id')->index();
+            $table->string('slug')->unique();
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
             $table->enum('status', ['borrowed', 'return_requested', 'returned', 'late', 'lost', 'damaged'])->default('borrowed');
             $table->string('receipt_number')->unique();
