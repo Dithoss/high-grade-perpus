@@ -23,12 +23,65 @@
             <a href="{{ route('transactions.trash') }}" class="inline-flex items-center px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-all shadow-sm hover:shadow-md">
                 <i class="fas fa-trash mr-2"></i> Lihat Dihapus
             </a>
+            {{-- Admin can always create transactions --}}
+            <a href="{{ route('transactions.create') }}" class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg transition-all shadow-md hover:shadow-lg">
+                <i class="fas fa-plus-circle mr-2"></i> Pinjam Buku
+            </a>
+        @else
+            {{-- User: Check for active fines --}}
+            @php
+                $hasActiveFine = auth()->user()->transactions()
+                    ->whereHas('fine', function ($q) {
+                        $q->whereIn('status', ['unpaid', 'pending_confirmation']);
+                    })
+                    ->exists();
+            @endphp
+
+            @if($hasActiveFine)
+                {{-- Disabled button with warning --}}
+                <button 
+                    type="button"
+                    onclick="showFineWarning()"
+                    class="inline-flex items-center px-4 py-2 bg-gray-300 text-gray-600 rounded-lg cursor-not-allowed opacity-75 shadow-sm">
+                    <i class="fas fa-exclamation-triangle mr-2"></i> Pinjam Buku
+                </button>
+            @else
+                {{-- Normal button --}}
+                <a href="{{ route('transactions.create') }}" class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg transition-all shadow-md hover:shadow-lg">
+                    <i class="fas fa-plus-circle mr-2"></i> Pinjam Buku
+                </a>
+            @endif
         @endrole
-        <a href="{{ route('transactions.create') }}" class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg transition-all shadow-md hover:shadow-lg">
-            <i class="fas fa-plus-circle mr-2"></i> Pinjam Buku
-        </a>
     </div>
 </div>
+
+{{-- Fine Warning Alert (Only for Users with active fines) --}}
+@role('user')
+    @if(isset($hasActiveFine) && $hasActiveFine)
+    <div class="bg-red-50 border-l-4 border-red-500 rounded-lg p-4 mb-6 shadow-md">
+        <div class="flex items-start">
+            <div class="flex-shrink-0">
+                <svg class="h-6 w-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                </svg>
+            </div>
+            <div class="ml-3 flex-1">
+                <h3 class="text-sm font-semibold text-red-800">
+                    Peminjaman Ditangguhkan
+                </h3>
+                <div class="mt-2 text-sm text-red-700">
+                    <p>Anda tidak dapat meminjam buku karena masih memiliki denda yang belum dibayar atau sedang menunggu konfirmasi pembayaran. Hubungi Admin jika masih tetap ingin meminjam buku</p>
+                </div>
+                <div class="mt-4">
+                    <a href="{{ route('fines.index') }}" class="inline-flex items-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-all shadow-sm hover:shadow-md">
+                        <i class="fas fa-money-bill-wave mr-2"></i> Bayar Denda Sekarang
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
+@endrole
 
 {{-- Filter Section --}}
 <div class="bg-white rounded-xl shadow-md mb-6 overflow-hidden">
@@ -165,9 +218,16 @@
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                             {{ $item->borrowed_at->format('d M Y') }}
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                        <td class="px-6 py-4 whitespace-nowrap">
                             @if($item->due_at)
-                                {{ \Carbon\Carbon::parse($item->due_at)->format('d M Y') }}
+                                <div class="text-sm text-gray-700">
+                                    {{ \Carbon\Carbon::parse($item->due_at)->format('d M Y') }}
+                                    @if($item->is_extended)
+                                        <span class="block text-xs text-purple-600 font-medium mt-1">
+                                            <i class="fas fa-clock"></i> Diperpanjang
+                                        </span>
+                                    @endif
+                                </div>
                             @else
                                 <span class="text-gray-400">-</span>
                             @endif
@@ -202,36 +262,70 @@
                             @endswitch
                         </td>
                         <td class="px-6 py-4">
-                            <div class="flex items-center justify-center gap-2">
+                            <div class="flex items-center justify-center gap-2 flex-wrap">
                                 <a href="{{ route('transactions.show', $item->id) }}" 
                                    class="inline-flex items-center px-3 py-1.5 bg-blue-100 hover:bg-blue-200 text-blue-700 text-xs font-medium rounded-lg transition-all">
                                     <i class="fas fa-eye mr-1"></i> Detail
                                 </a>
                                 
+                                {{-- USER ACTIONS --}}
+                                @role('user')
+                                    @if($item->canBeExtended())
+                                        <form action="{{ route('transactions.request-extend', $item->id) }}" method="POST" class="inline-block">
+                                            @csrf
+                                            <button type="submit" 
+                                                    class="inline-flex items-center px-3 py-1.5 bg-purple-100 hover:bg-purple-200 text-purple-700 text-xs font-medium rounded-lg transition-all" 
+                                                    onclick="return confirm('Ajukan perpanjangan peminjaman?')">
+                                                <i class="fas fa-clock mr-1"></i> Perpanjang
+                                            </button>
+                                        </form>
+                                    @elseif($item->hasPendingExtension())
+                                        <span class="inline-flex items-center px-3 py-1.5 bg-yellow-100 text-yellow-700 text-xs font-medium rounded-lg">
+                                            <i class="fas fa-hourglass-half mr-1"></i> Menunggu
+                                        </span>
+                                    @elseif($item->alreadyExtended())
+                                        <span class="inline-flex items-center px-3 py-1.5 bg-gray-100 text-gray-600 text-xs font-medium rounded-lg">
+                                            <i class="fas fa-check mr-1"></i> Sudah Diperpanjang
+                                        </span>
+                                    @endif
+                                @endrole
+
+                                {{-- ADMIN ACTIONS --}}
                                 @role('admin')
+                                    @if($item->hasPendingExtension() && $item->status === 'borrowed')
+                                        <form action="{{ route('transactions.approve-extend', $item->id) }}" method="POST" class="inline-block">
+                                            @csrf
+                                            <button type="submit" 
+                                                    class="inline-flex items-center px-3 py-1.5 bg-purple-100 hover:bg-purple-200 text-purple-700 text-xs font-medium rounded-lg transition-all" 
+                                                    onclick="return confirm('Setujui perpanjangan peminjaman?')">
+                                                <i class="fas fa-check mr-1"></i> Setujui Perpanjang
+                                            </button>
+                                        </form>
+                                    @endif
+
                                     @if($item->status === 'return_requested')
-                                    <form action="{{ route('confirm-return', $item->id) }}" method="POST" class="inline-block">
-                                        @csrf
-                                        <button type="submit" 
-                                                class="inline-flex items-center px-3 py-1.5 bg-green-100 hover:bg-green-200 text-green-700 text-xs font-medium rounded-lg transition-all" 
-                                                onclick="return confirm('Konfirmasi pengembalian buku ini?')">
-                                            <i class="fas fa-check-circle mr-1"></i> Konfirmasi
-                                        </button>
-                                    </form>
+                                        <form action="{{ route('confirm-return', $item->id) }}" method="POST" class="inline-block">
+                                            @csrf
+                                            <button type="submit" 
+                                                    class="inline-flex items-center px-3 py-1.5 bg-green-100 hover:bg-green-200 text-green-700 text-xs font-medium rounded-lg transition-all" 
+                                                    onclick="return confirm('Konfirmasi pengembalian buku ini?')">
+                                                <i class="fas fa-check-circle mr-1"></i> Konfirmasi
+                                            </button>
+                                        </form>
                                     @endif
 
                                     @if($item->status === 'returned')
-                                    <a href="{{ route('transactions.inspect', $item->id) }}" 
-                                       class="inline-flex items-center px-3 py-1.5 bg-yellow-100 hover:bg-yellow-200 text-yellow-700 text-xs font-medium rounded-lg transition-all">
-                                        <i class="fas fa-search mr-1"></i> Inspeksi
-                                    </a>
+                                        <a href="{{ route('transactions.inspect', $item->id) }}" 
+                                           class="inline-flex items-center px-3 py-1.5 bg-yellow-100 hover:bg-yellow-200 text-yellow-700 text-xs font-medium rounded-lg transition-all">
+                                            <i class="fas fa-search mr-1"></i> Inspeksi
+                                        </a>
                                     @endif
 
                                     @if(!in_array($item->status, ['damaged', 'lost']))
-                                    <a href="{{ route('transactions.edit', $item->id) }}" 
-                                       class="inline-flex items-center px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-medium rounded-lg transition-all">
-                                        <i class="fas fa-edit mr-1"></i> Update
-                                    </a>
+                                        <a href="{{ route('transactions.edit', $item->id) }}" 
+                                           class="inline-flex items-center px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-medium rounded-lg transition-all">
+                                            <i class="fas fa-edit mr-1"></i> Update
+                                        </a>
                                     @endif
 
                                     <form action="{{ route('transactions.destroy', $item->id) }}" method="POST" class="inline-block">
@@ -259,14 +353,19 @@
                                         Anda belum memiliki transaksi peminjaman
                                     @endrole
                                 </p>
-                                <a href="{{ route('transactions.create') }}" 
-                                   class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg transition-all shadow-md hover:shadow-lg mt-2">
-                                    @role('admin')
+                                @role('user')
+                                    @if(!isset($hasActiveFine) || !$hasActiveFine)
+                                        <a href="{{ route('transactions.create') }}" 
+                                           class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg transition-all shadow-md hover:shadow-lg mt-2">
+                                            Mulai pinjam buku sekarang
+                                        </a>
+                                    @endif
+                                @else
+                                    <a href="{{ route('transactions.create') }}" 
+                                       class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg transition-all shadow-md hover:shadow-lg mt-2">
                                         Buat transaksi peminjaman baru
-                                    @else
-                                        Mulai pinjam buku sekarang
-                                    @endrole
-                                </a>
+                                    </a>
+                                @endrole
                             </div>
                         </td>
                     </tr>
@@ -281,7 +380,7 @@
             <div class="p-4 hover:bg-gray-50 transition-colors">
                 <div class="flex justify-between items-start mb-3">
                     <span class="inline-flex items-center px-3 py-1 bg-gray-100 text-gray-700 text-xs font-semibold rounded-full">
-                        #{{ substr($item->id, 0, 8) }}
+                        #{{ substr($item->receipt_number, 0, 8) }}
                     </span>
                     @switch($item->status)
                         @case('borrowed')
@@ -334,6 +433,16 @@
 
                 <div class="text-sm text-gray-500 mb-4 space-y-1">
                     <div><i class="fas fa-calendar-alt mr-2 text-gray-400"></i>Pinjam: {{ $item->borrowed_at->format('d M Y') }}</div>
+                    @if($item->due_at)
+                        <div>
+                            <i class="fas fa-calendar-check mr-2 text-gray-400"></i>Jatuh Tempo: {{ \Carbon\Carbon::parse($item->due_at)->format('d M Y') }}
+                            @if($item->is_extended)
+                                <span class="text-xs text-purple-600 font-medium ml-1">
+                                    (Diperpanjang)
+                                </span>
+                            @endif
+                        </div>
+                    @endif
                     <div>
                         <i class="fas fa-boxes mr-2 text-gray-400"></i>Qty: 
                         @php
@@ -349,21 +458,47 @@
                         <i class="fas fa-eye mr-1"></i> Detail
                     </a>
                     
+                    {{-- USER MOBILE ACTIONS --}}
+                    @role('user')
+                        @if($item->canBeExtended())
+                            <form action="{{ route('transactions.request-extend', $item->id) }}" method="POST" class="flex-1">
+                                @csrf
+                                <button type="submit" 
+                                        class="w-full inline-flex items-center justify-center px-3 py-2 bg-purple-100 hover:bg-purple-200 text-purple-700 text-xs font-medium rounded-lg transition-all" 
+                                        onclick="return confirm('Ajukan perpanjangan?')">
+                                    <i class="fas fa-clock mr-1"></i> Perpanjang
+                                </button>
+                            </form>
+                        @endif
+                    @endrole
+
+                    {{-- ADMIN MOBILE ACTIONS --}}
                     @role('admin')
+                        @if($item->hasPendingExtension() && $item->status === 'borrowed')
+                            <form action="{{ route('transactions.approve-extend', $item->id) }}" method="POST" class="flex-1">
+                                @csrf
+                                <button type="submit" 
+                                        class="w-full inline-flex items-center justify-center px-3 py-2 bg-purple-100 hover:bg-purple-200 text-purple-700 text-xs font-medium rounded-lg transition-all" 
+                                        onclick="return confirm('Setujui perpanjangan?')">
+                                    <i class="fas fa-check mr-1"></i> Setujui
+                                </button>
+                            </form>
+                        @endif
+
                         @if($item->status === 'return_requested')
-                        <form action="{{ route('confirm-return', $item->id) }}" method="POST" class="flex-1">
-                            @csrf
-                            <button type="submit" 
-                                    class="w-full inline-flex items-center justify-center px-3 py-2 bg-green-100 hover:bg-green-200 text-green-700 text-xs font-medium rounded-lg transition-all" 
-                                    onclick="return confirm('Konfirmasi pengembalian?')">
-                                <i class="fas fa-check-circle mr-1"></i> Konfirmasi
-                            </button>
-                        </form>
+                            <form action="{{ route('confirm-return', $item->id) }}" method="POST" class="flex-1">
+                                @csrf
+                                <button type="submit" 
+                                        class="w-full inline-flex items-center justify-center px-3 py-2 bg-green-100 hover:bg-green-200 text-green-700 text-xs font-medium rounded-lg transition-all" 
+                                        onclick="return confirm('Konfirmasi pengembalian?')">
+                                    <i class="fas fa-check-circle mr-1"></i> Konfirmasi
+                                </button>
+                            </form>
                         @elseif(!in_array($item->status, ['damaged', 'lost']))
-                        <a href="{{ route('transactions.edit', $item->id) }}" 
-                           class="inline-flex items-center px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-medium rounded-lg transition-all">
-                            <i class="fas fa-edit mr-1"></i> Update
-                        </a>
+                            <a href="{{ route('transactions.edit', $item->id) }}" 
+                               class="inline-flex items-center px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-medium rounded-lg transition-all">
+                                <i class="fas fa-edit mr-1"></i> Update
+                            </a>
                         @endif
 
                         <form action="{{ route('transactions.destroy', $item->id) }}" method="POST">
@@ -382,10 +517,19 @@
             <div class="p-8 text-center">
                 <i class="fas fa-inbox text-gray-300 text-5xl mb-4"></i>
                 <p class="text-gray-500 mb-3">Tidak ada transaksi</p>
-                <a href="{{ route('transactions.create') }}" 
-                   class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg transition-all shadow-md hover:shadow-lg">
-                    Buat transaksi peminjaman baru
-                </a>
+                @role('user')
+                    @if(!isset($hasActiveFine) || !$hasActiveFine)
+                        <a href="{{ route('transactions.create') }}" 
+                           class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg transition-all shadow-md hover:shadow-lg">
+                            Mulai pinjam buku sekarang
+                        </a>
+                    @endif
+                @else
+                    <a href="{{ route('transactions.create') }}" 
+                       class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg transition-all shadow-md hover:shadow-lg">
+                        Buat transaksi peminjaman baru
+                    </a>
+                @endrole
             </div>
             @endforelse
         </div>
@@ -399,3 +543,32 @@
     @endif
 </div>
 @endsection
+
+@push('scripts')
+<script>
+function showFineWarning() {
+    // Using SweetAlert2 if you have it installed
+    if (typeof Swal !== 'undefined') {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Peminjaman Ditangguhkan',
+            html: '<p class="text-gray-700">Anda tidak dapat meminjam buku karena masih memiliki denda yang belum dibayar atau sedang menunggu konfirmasi pembayaran.</p>',
+            showCancelButton: true,
+            confirmButtonText: '<i class="fas fa-money-bill-wave mr-2"></i>Bayar Denda',
+            cancelButtonText: 'Tutup',
+            confirmButtonColor: '#dc2626',
+            cancelButtonColor: '#6b7280',
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = '{{ route("fines.index") }}';
+            }
+        });
+    } else {
+        // Fallback to native alert
+        if (confirm('Anda tidak dapat meminjam buku karena masih memiliki denda yang belum dibayar.\n\nKlik OK untuk membayar denda sekarang.')) {
+            window.location.href = '{{ route("fines.index") }}';
+        }
+    }
+}
+</script>
+@endpush

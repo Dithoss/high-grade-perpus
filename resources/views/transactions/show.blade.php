@@ -176,6 +176,11 @@
                         <div class="ml-4">
                             <p class="font-semibold text-gray-900">Jatuh Tempo</p>
                             <p class="text-sm text-gray-600">{{ \Carbon\Carbon::parse($transaction->due_at)->format('d M Y') }}</p>
+                            @if($transaction->is_extended)
+                                <span class="inline-block mt-1 px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded-full font-medium">
+                                    <i class="fas fa-clock"></i> Sudah Diperpanjang
+                                </span>
+                            @endif
                             @if($transaction->status === 'borrowed' && now()->gt($transaction->due_at))
                                 <span class="inline-block mt-1 px-2 py-1 bg-red-100 text-red-800 text-xs rounded-full">
                                     Terlambat {{ now()->diffInDays($transaction->due_at) }} hari
@@ -212,6 +217,59 @@
                 @endif
             </div>
         </div>
+
+        <!-- EXTENSION HISTORY -->
+        @if($transaction->extension_requested_at || $transaction->extension_approved_at || $transaction->is_extended)
+        <div>
+            <h3 class="font-bold text-lg mb-3 flex items-center">
+                <svg class="w-5 h-5 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                Riwayat Perpanjangan
+            </h3>
+
+            <div class="bg-purple-50 border border-purple-200 rounded-lg p-6 space-y-4">
+                @if($transaction->extension_requested_at && !$transaction->extension_approved_at)
+                    <div class="flex items-start">
+                        <div class="flex-shrink-0 w-10 h-10 bg-yellow-500 rounded-full flex items-center justify-center text-white">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
+                            </svg>
+                        </div>
+                        <div class="ml-4">
+                            <p class="font-semibold text-gray-900">Perpanjangan Diajukan</p>
+                            <p class="text-sm text-gray-600">{{ $transaction->extension_requested_at->format('d M Y, H:i') }}</p>
+                            <span class="inline-block mt-2 px-3 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full font-semibold">
+                                <i class="fas fa-hourglass-half mr-1"></i> Menunggu Persetujuan Admin
+                            </span>
+                        </div>
+                    </div>
+                @endif
+
+                @if($transaction->extension_approved_at && $transaction->is_extended)
+                    <div class="flex items-start">
+                        <div class="flex-shrink-0 w-10 h-10 bg-green-500 rounded-full flex items-center justify-center text-white">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                            </svg>
+                        </div>
+                        <div class="ml-4">
+                            <p class="font-semibold text-gray-900">Perpanjangan Disetujui</p>
+                            <p class="text-sm text-gray-600">{{ $transaction->extension_approved_at->format('d M Y, H:i') }}</p>
+                            <span class="inline-block mt-2 px-3 py-1 bg-green-100 text-green-800 text-xs rounded-full font-semibold">
+                                <i class="fas fa-check-circle mr-1"></i> Jatuh tempo diperpanjang 7 hari
+                            </span>
+                            @if($transaction->extended_due_at)
+                                <p class="text-xs text-gray-500 mt-1">
+                                    Jatuh tempo baru: {{ \Carbon\Carbon::parse($transaction->extended_due_at)->format('d M Y') }}
+                                </p>
+                            @endif
+                        </div>
+                    </div>
+                @endif
+            </div>
+        </div>
+        @endif
 
         <!-- FINES (if any) -->
         @if($transaction->fines && $transaction->fines->count() > 0)
@@ -265,44 +323,94 @@
     </div>
 
     <!-- ACTION BUTTONS -->
-    @if(auth()->user()->hasRole('user') && $transaction->status === 'borrowed')
-        <form action="{{ route('request-return', $transaction->id) }}" method="POST" class="mt-6">
-            @csrf
-            <button type="submit" 
-                    class="w-full py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all"
-                    onclick="return confirm('Ajukan pengembalian buku?')">
-                <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/>
-                </svg>
-                Ajukan Pengembalian
-            </button>
-        </form>
+    @if(auth()->user()->hasRole('user'))
+        @if($transaction->status === 'borrowed')
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-6">
+                {{-- Request Return Button --}}
+                <form action="{{ route('request-return', $transaction->id) }}" method="POST">
+                    @csrf
+                    <button type="submit" 
+                            class="w-full py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all"
+                            onclick="return confirm('Ajukan pengembalian buku?')">
+                        <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/>
+                        </svg>
+                        Ajukan Pengembalian
+                    </button>
+                </form>
+
+                {{-- Request Extend Button --}}
+                @if($transaction->canBeExtended())
+                    <form action="{{ route('transactions.request-extend', $transaction->id) }}" method="POST">
+                        @csrf
+                        <button type="submit" 
+                                class="w-full py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all"
+                                onclick="return confirm('Ajukan perpanjangan peminjaman?')">
+                            <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            Ajukan Perpanjangan
+                        </button>
+                    </form>
+                @elseif($transaction->hasPendingExtension())
+                    <div class="w-full py-3 bg-yellow-100 text-yellow-700 text-center rounded-lg font-semibold border-2 border-yellow-300 flex items-center justify-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        Menunggu Persetujuan Perpanjangan
+                    </div>
+                @elseif($transaction->alreadyExtended())
+                    <div class="w-full py-3 bg-gray-100 text-gray-600 text-center rounded-lg font-semibold border-2 border-gray-300 flex items-center justify-center">
+                        <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                        </svg>
+                        Sudah Diperpanjang
+                    </div>
+                @endif
+            </div>
+        @endif
     @endif
 
     @role('admin')
-        @if($transaction->status === 'return_requested')
-            <form action="{{ route('confirm-return', $transaction->id) }}" method="POST" class="mt-6">
-                @csrf
-                <button type="submit" 
-                        class="w-full py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all"
-                        onclick="return confirm('Konfirmasi pengembalian buku?')">
-                    <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                    </svg>
-                    Konfirmasi Pengembalian
-                </button>
-            </form>
-        @endif
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-6">
+            @if($transaction->status === 'return_requested')
+                <form action="{{ route('confirm-return', $transaction->id) }}" method="POST" class="md:col-span-2">
+                    @csrf
+                    <button type="submit" 
+                            class="w-full py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all"
+                            onclick="return confirm('Konfirmasi pengembalian buku?')">
+                        <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                        </svg>
+                        Konfirmasi Pengembalian
+                    </button>
+                </form>
+            @endif
 
-        @if($transaction->status === 'returned')
-            <a href="{{ route('transactions.inspect', $transaction->id) }}" 
-               class="block w-full mt-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white text-center rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all">
-                <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v11a2 2 0 002 2h6a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
-                </svg>
-                Lakukan Inspeksi Buku
-            </a>
-        @endif
+            @if($transaction->hasPendingExtension() && $transaction->status === 'borrowed')
+                <form action="{{ route('transactions.approve-extend', $transaction->id) }}" method="POST" class="{{ $transaction->status !== 'return_requested' ? 'md:col-span-2' : '' }}">
+                    @csrf
+                    <button type="submit" 
+                            class="w-full py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all"
+                            onclick="return confirm('Setujui perpanjangan peminjaman?')">
+                        <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                        </svg>
+                        Setujui Perpanjangan
+                    </button>
+                </form>
+            @endif
+
+            @if($transaction->status === 'returned')
+                <a href="{{ route('transactions.inspect', $transaction->id) }}" 
+                   class="md:col-span-2 block w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white text-center rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all">
+                    <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v11a2 2 0 002 2h6a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+                    </svg>
+                    Lakukan Inspeksi Buku
+                </a>
+            @endif
+        </div>
     @endrole
 
 </div>

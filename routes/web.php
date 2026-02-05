@@ -119,6 +119,8 @@ Route::middleware('auth')->group(function () {
 
         Route::post('users', [AuthController::class, 'store'])
             ->name('users.store');
+        Route::post('transactions/{id}/approve-extend',[TransactionController::class, 'approveExtend']
+            )->name('transactions.approve-extend');
 
 
 
@@ -156,5 +158,7 @@ Route::middleware('auth')->group(function () {
         ->name('fines.pay');
         Route::get('/books/{book}/related', [BookController::class, 'related'])
         ->name('books.related');
+        Route::post('transactions/{id}/request-extend',[TransactionController::class, 'requestExtend'])->name('transactions.request-extend');
+
     });
 });

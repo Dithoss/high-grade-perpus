@@ -5,6 +5,7 @@ use App\Contracts\Interface\TransactionInterface;
 use App\Helpers\QueryFilterHelper;
 use App\Models\Transaction;
 use App\Models\TransactionItem;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Arr;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -195,5 +196,38 @@ class TransactionRepository implements TransactionInterface
             'status'      => 'returned',
             'returned_at' => now(),
         ]);
+    }
+    
+public function requestExtend(Transaction $transaction): Transaction
+{
+    if (!$transaction->canBeExtended()) {
+        abort(403, 'Transaksi tidak memenuhi syarat perpanjangan');
+    }
+
+    $transaction->update([
+        'extension_requested_at' => now(),
+    ]);
+
+    return $transaction->fresh();
+}
+
+    public function approveExtend(Transaction $transaction): Transaction
+    {
+        if (!$transaction->extension_requested_at || $transaction->is_extended) {
+            abort(400, 'Perpanjangan tidak valid');
+        }
+
+        $newDueDate = Carbon::parse($transaction->due_at)
+            ->addDays(7)
+            ->toDateString();
+
+        $transaction->update([
+            'due_at'                 => $newDueDate,
+            'extended_due_at'        => $newDueDate,
+            'is_extended'            => true,
+            'extension_approved_at'  => now(),
+        ]);
+
+        return $transaction->fresh();
     }
 }

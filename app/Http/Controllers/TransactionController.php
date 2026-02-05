@@ -10,12 +10,15 @@ use App\Http\Requests\Transaction\UpdateTransaction;
 use App\Models\Fine;
 use App\Models\Transaction;
 use App\Models\AuditLog;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class TransactionController extends Controller
 {
+    use AuthorizesRequests;
+
     public function __construct(
         protected TransactionInterface $repo
     ) {}
@@ -49,6 +52,7 @@ class TransactionController extends Controller
 
     public function store(StoreTransaction $request)
     {
+        $this->authorize('create', Transaction::class);
         DB::transaction(function () use ($request) {
             $transaction = $this->repo->store(
                 array_merge(
@@ -76,6 +80,42 @@ class TransactionController extends Controller
             ->route('transactions.index')
             ->with('success', 'Transaksi berhasil dibuat');
     }
+    public function requestExtend(string $id)
+    {
+        $transaction = $this->repo->findById($id);
+
+        $this->authorize('extend', $transaction);
+
+        $this->repo->requestExtend($transaction);
+
+        AuditLog::create([
+            'user_id'     => auth()->id(),
+            'action'      => 'request_extend',
+            'target_type' => Transaction::class,
+            'target_id'   => $transaction->id,
+            'description' => 'User mengajukan perpanjangan peminjaman',
+        ]);
+
+        return back()->with('success', 'Permintaan perpanjangan dikirim');
+    }
+    public function approveExtend(string $id)
+    {
+        $transaction = $this->repo->findById($id);
+
+        $this->repo->approveExtend($transaction);
+
+        AuditLog::create([
+            'user_id'     => auth()->id(),
+            'action'      => 'approve_extend',
+            'target_type' => Transaction::class,
+            'target_id'   => $transaction->id,
+            'description' => 'Admin menyetujui perpanjangan peminjaman',
+        ]);
+
+        return back()->with('success', 'Perpanjangan peminjaman disetujui');
+    }
+
+
 
     public function show(string $id)
     {

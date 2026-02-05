@@ -19,4 +19,7 @@ interface TransactionInterface
     public function searchTrashed(string $keyword, int $perPage = 15);
     public function confirmReturn(Transaction $transaction): void;
     public function requestReturn(string $id): Transaction;
+    public function requestExtend(Transaction $transaction): Transaction;
+    public function approveExtend(Transaction $transaction): Transaction;
+
 }
