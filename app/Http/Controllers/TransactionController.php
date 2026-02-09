@@ -98,6 +98,77 @@ class TransactionController extends Controller
 
         return back()->with('success', 'Permintaan perpanjangan dikirim');
     }
+    /**
+     * Show transaction history
+     */
+    public function history(Request $request)
+    {
+        $filters = $request->only([
+            'search',
+            'status',
+            'date_from',
+            'date_to',
+        ]);
+
+        $userId = auth()->user()->hasRole('user') ? auth()->id() : null;
+        
+        $query = Transaction::query()
+            ->with(['user', 'items.book.category', 'fine'])
+            ->when($userId, fn($q) => $q->where('user_id', $userId));
+
+        // Apply filters
+        if ($search = $filters['search'] ?? null) {
+            $query->where(function ($q) use ($search) {
+                $q->where('receipt_number', 'like', "%{$search}%")
+                  ->orWhereHas('items.book', fn($query) => $query->where('name', 'like', "%{$search}%"));
+            });
+        }
+
+        if ($status = $filters['status'] ?? null) {
+            if ($status === 'overdue') {
+                $query->where('status', 'borrowed')
+                      ->whereDate('due_at', '<', now());
+            } else {
+                $query->where('status', $status);
+            }
+        }
+
+        if ($dateFrom = $filters['date_from'] ?? null) {
+            $query->whereDate('borrowed_at', '>=', $dateFrom);
+        }
+
+        if ($dateTo = $filters['date_to'] ?? null) {
+            $query->whereDate('borrowed_at', '<=', $dateTo);
+        }
+
+        $transactions = $query->orderBy('created_at', 'desc')->paginate(10)->withQueryString();
+
+        // Calculate stats
+        $stats = [
+            'total' => Transaction::when($userId, fn($q) => $q->where('user_id', $userId))->count(),
+            'returned' => Transaction::when($userId, fn($q) => $q->where('user_id', $userId))
+                ->where('status', 'returned')->count(),
+            'borrowed' => Transaction::when($userId, fn($q) => $q->where('user_id', $userId))
+                ->where('status', 'borrowed')->count(),
+            'overdue' => Transaction::when($userId, fn($q) => $q->where('user_id', $userId))
+                ->where('status', 'borrowed')
+                ->whereDate('due_at', '<', now())
+                ->count(),
+        ];
+
+        return view('transactions.history', compact('transactions', 'stats'));
+    }
+
+    /**
+     * Show transaction receipt
+     */
+    public function receipt($id)
+    {
+        $transaction = Transaction::with(['user', 'items.book.category'])
+            ->findOrFail($id);
+        
+        return view('transactions.receipt', compact('transaction'));
+    }
     public function approveExtend(string $id)
     {
         $transaction = $this->repo->findById($id);

@@ -516,6 +516,15 @@
                             </div>
                             <span class="ml-4 font-medium text-base">Denda Saya</span>
                         </a>
+                         <!-- Riwayat Transaksi -->
+                        <a href="{{ route('transactions.history') }}" 
+                            class="nav-link flex items-center px-4 py-3.5 text-gray-700 hover:bg-blue-50 rounded-xl group"
+                            data-page="history">
+                            <div class="w-10 h-10 flex items-center justify-center rounded-lg bg-purple-50 group-hover:bg-purple-100">
+                                <i class="fas fa-history icon-large text-purple-600"></i>
+                            </div>
+                            <span class="ml-4 font-medium text-base">Riwayat Transaksi</span>
+                        </a>
                     @endrole
                 </div>
             </nav>

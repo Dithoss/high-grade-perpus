@@ -42,6 +42,16 @@ Route::resource('products', ProductController::class)->except('show');
 |--------------------------------------------------------------------------
 */
 Route::middleware('auth')->group(function () {
+     Route::get('transactions/history', [TransactionController::class, 'history'])
+        ->name('transactions.history');
+    
+    // Bukti transaksi - untuk semua user
+    Route::get('transactions/{id}/receipt', [TransactionController::class, 'receipt'])
+        ->name('transactions.receipt');
+    
+    // Export riwayat transaksi (opsional)
+    Route::get('transactions/history/export', [TransactionController::class, 'exportHistory'])
+        ->name('transactions.history.export');
  Route::get('/notifications', [NotificationController::class, 'index'])
         ->name('notifications.index');
     
@@ -65,8 +75,6 @@ Route::middleware('auth')->group(function () {
     Route::get('/users/dashboard', [AuthController::class, 'userDashboard'])->name('users.dashboard');
 
     Route::get('books', [BookController::class, 'index'])->name('books.index');
-    Route::get('books/{book:slug}', [BookController::class, 'show'])->name('books.show');
-
 
     Route::get('transactions', [TransactionController::class, 'index'])->name('transactions.index');
     Route::get('transactions/create', [TransactionController::class, 'create'])->name('transactions.create');
@@ -136,6 +144,7 @@ Route::middleware('auth')->group(function () {
         Route::post('fines/{fine}/reject', [FineController::class, 'rejectPayment'])
             ->name('fines.reject');
     });
+    Route::get('books/{book:slug}', [BookController::class, 'show'])->name('books.show');
     
     Route::get('users/{user}', [AuthController::class, 'show'])
         ->name('users.show');
