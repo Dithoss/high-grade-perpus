@@ -11,6 +11,7 @@ use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\TripayCallbackController;
+use App\Http\Controllers\WishlistController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -83,6 +84,9 @@ Route::middleware('auth')->group(function () {
     Route::post('tripay/callback', [TripayCallbackController::class, 'handle']);
     Route::post('/payment/checkout', [PaymentController::class, 'checkout']);
 
+    // Wishlist Routes (Available to all authenticated users)
+    Route::get('/wishlist', [WishlistController::class, 'index'])->name('wishlist.index');
+    Route::post('/wishlist/{book:slug}/toggle', [WishlistController::class, 'toggle'])->name('wishlist.toggle');
     
     /*
     |--------------------------------------------------------------------------

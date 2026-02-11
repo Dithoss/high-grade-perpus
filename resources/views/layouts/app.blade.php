@@ -12,7 +12,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     @stack('styles')
     <style>
-        /* [Previous styles remain exactly the same] */
         * {
             font-family: 'Poppins', sans-serif;
         }
@@ -38,7 +37,6 @@
             --shadow: rgba(0, 0, 0, 0.3);
         }
 
-        /* Apply dark mode colors */
         .dark body {
             background-color: var(--bg-primary);
             color: var(--text-primary);
@@ -80,13 +78,11 @@
             border-color: #475569 !important;
         }
 
-        /* Dark mode for cards */
         .dark .card-friendly {
             background-color: var(--bg-secondary) !important;
             box-shadow: 0 2px 8px var(--shadow) !important;
         }
 
-        /* Dark mode for inputs */
         .dark input,
         .dark select,
         .dark textarea {
@@ -107,12 +103,10 @@
             background-color: var(--bg-secondary) !important;
         }
 
-        /* Dark mode for flash messages */
         .dark .flash-message {
             box-shadow: 0 4px 12px var(--shadow) !important;
         }
 
-        /* Custom scrollbar */
         ::-webkit-scrollbar {
             width: 10px;
             height: 10px;
@@ -131,12 +125,10 @@
             background: #64748b;
         }
 
-        /* Smooth transitions */
         * {
             transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
         }
 
-        /* Dark Mode Toggle Button */
         .dark-mode-toggle {
             position: relative;
             width: 56px;
@@ -179,7 +171,6 @@
             color: #fbbf24;
         }
 
-        /* Notification Badge */
         .notification-badge {
             position: absolute;
             top: -4px;
@@ -212,7 +203,6 @@
             }
         }
 
-        /* Notification Dropdown */
         .notification-dropdown {
             display: none;
             position: absolute;
@@ -250,7 +240,6 @@
             }
         }
 
-        /* Notification item styles */
         .notification-item {
             transition: background-color 0.2s;
         }
@@ -263,14 +252,12 @@
             background-color: #1e3a5f;
         }
 
-        /* Button yang lebih besar dan jelas */
         .btn-large {
             min-height: 44px;
             font-size: 16px;
             padding: 0 24px;
         }
 
-        /* Active menu - lebih jelas */
         .menu-active {
             background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
             color: white;
@@ -286,7 +273,6 @@
             background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
         }
 
-        /* Card yang lebih friendly */
         .card-friendly {
             background: white;
             border-radius: 16px;
@@ -298,7 +284,6 @@
             box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
         }
 
-        /* Flash message animation */
         @keyframes slideInRight {
             from {
                 transform: translateX(100%);
@@ -314,18 +299,15 @@
             animation: slideInRight 0.3s ease-out;
         }
 
-        /* Icon yang lebih besar untuk kemudahan */
         .icon-large {
             font-size: 20px;
         }
 
-        /* Search focus yang lebih jelas */
         .search-input:focus {
             box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
             border-color: #3b82f6;
         }
 
-        /* Tooltip sederhana */
         [data-tooltip] {
             position: relative;
         }
@@ -353,10 +335,8 @@
 </head>
 <body class="bg-gray-50">
     <div class="flex h-screen overflow-hidden">
-        <!-- Sidebar - [Keep existing sidebar code exactly the same] -->
         <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-72 bg-white transform -translate-x-full transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static flex flex-col shadow-lg border-r border-gray-200">
             
-            <!-- Logo Header - Lebih Besar dan Jelas -->
             <div class="h-20 px-6 flex items-center justify-between bg-gradient-to-r from-blue-600 to-blue-700 shadow-md">
                 <div class="flex items-center space-x-3">
                     <div class="w-12 h-12 bg-white bg-opacity-20 rounded-xl flex items-center justify-center backdrop-blur-sm">
@@ -372,7 +352,6 @@
                 </button>
             </div>
 
-            <!-- User Info - Lebih Prominent -->
             <div class="p-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
                 <a href="{{ route('users.edit', Auth::id()) }}" class="block">
                     <div class="flex items-center space-x-3 p-3 hover:bg-white rounded-xl transition-all">
@@ -413,11 +392,9 @@
                 </a>
             </div>
             
-            <!-- Navigation Menu - Icon dan Text Lebih Besar -->
             <nav class="flex-1 px-4 py-6 overflow-y-auto">
                 <div class="space-y-2">
                     
-                    <!-- Dashboard -->
                     @role('admin')
                         <a href="{{ route('dashboard') }}" 
                            class="nav-link flex items-center px-4 py-3.5 text-gray-700 hover:bg-blue-50 rounded-xl group"
@@ -432,18 +409,23 @@
                         </div>
                         <span class="ml-4 font-medium text-base">Beranda</span>
                     </a>
+                                        
+                    <div class="group">
+                        <a 
+                            href="{{ route('books.index') }}"
+                            class="nav-link w-full flex items-center px-4 py-3.5 text-gray-700 hover:bg-blue-50 rounded-xl"
+                            data-page="books"
+                        >
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 flex items-center justify-center rounded-lg bg-green-50 group-hover:bg-green-100">
+                                    <i class="fas fa-book icon-large text-green-600"></i>
+                                </div>
+                                <span class="ml-4 font-medium text-base">Koleksi Buku</span>
+                            </div>
+                        </a>
+                    </div>
+
                     
-                    <!-- Books -->
-                    <a href="{{ route('books.index') }}" 
-                       class="nav-link flex items-center px-4 py-3.5 text-gray-700 hover:bg-blue-50 rounded-xl group"
-                       data-page="books">
-                        <div class="w-10 h-10 flex items-center justify-center rounded-lg bg-green-50 group-hover:bg-green-100">
-                            <i class="fas fa-book icon-large text-green-600"></i>
-                        </div>
-                        <span class="ml-4 font-medium text-base">Koleksi Buku</span>
-                    </a>
-                    
-                    <!-- Transactions -->
                     <a href="{{ route('transactions.index') }}" 
                        class="nav-link flex items-center px-4 py-3.5 text-gray-700 hover:bg-blue-50 rounded-xl group"
                        data-page="transactions">
@@ -460,14 +442,12 @@
                     </a>
 
                     @role('admin')
-                        <!-- Admin Section -->
                         <div class="pt-6 pb-2">
                             <div class="px-4 mb-3">
                                 <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">Menu Admin</span>
                             </div>
                         </div>
 
-                        <!-- Categories -->
                         <a href="{{ route('categories.index') }}" 
                            class="nav-link flex items-center px-4 py-3.5 text-gray-700 hover:bg-blue-50 rounded-xl group"
                            data-page="categories">
@@ -477,7 +457,6 @@
                             <span class="ml-4 font-medium text-base">Kategori</span>
                         </a>
 
-                        <!-- Users -->
                         <a href="{{ route('users.index') }}" 
                            class="nav-link flex items-center px-4 py-3.5 text-gray-700 hover:bg-blue-50 rounded-xl group"
                            data-page="users">
@@ -487,7 +466,6 @@
                             <span class="ml-4 font-medium text-base">Kelola Member</span>
                         </a>
                         
-                        <!-- Audit Log -->
                         <a href="{{ route('audit.index') }}" 
                            class="nav-link flex items-center px-4 py-3.5 text-gray-700 hover:bg-blue-50 rounded-xl group"
                            data-page="audit">
@@ -497,7 +475,6 @@
                             <span class="ml-4 font-medium text-base">Riwayat Aktivitas</span>
                         </a>
 
-                        <!-- Fines -->
                         <a href="{{ route('admin.fines.index') }}" 
                            class="nav-link flex items-center px-4 py-3.5 text-gray-700 hover:bg-blue-50 rounded-xl group"
                            data-page="fines">
@@ -507,7 +484,6 @@
                             <span class="ml-4 font-medium text-base">Kelola Denda</span>
                         </a>
                     @else
-                        <!-- User Fines -->
                         <a href="{{ route('fines.index') }}" 
                            class="nav-link flex items-center px-4 py-3.5 text-gray-700 hover:bg-blue-50 rounded-xl group"
                            data-page="fines">
@@ -516,8 +492,7 @@
                             </div>
                             <span class="ml-4 font-medium text-base">Denda Saya</span>
                         </a>
-                         <!-- Riwayat Transaksi -->
-                        <a href="{{ route('transactions.history') }}" 
+                         <a href="{{ route('transactions.history') }}" 
                             class="nav-link flex items-center px-4 py-3.5 text-gray-700 hover:bg-blue-50 rounded-xl group"
                             data-page="history">
                             <div class="w-10 h-10 flex items-center justify-center rounded-lg bg-purple-50 group-hover:bg-purple-100">
@@ -529,7 +504,6 @@
                 </div>
             </nav>
             
-            <!-- Logout Button - Sangat Jelas -->
             <div class="border-t border-gray-200 p-4 bg-gray-50">
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
@@ -543,31 +517,25 @@
             </div>
         </aside>
 
-        <!-- Overlay untuk mobile -->
         <div id="sidebarOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden lg:hidden"></div>
 
-        <!-- Main Content Area -->
         <div class="flex-1 flex flex-col overflow-hidden">
             
-            <!-- Header dengan Notifikasi Real-time -->
             <header class="bg-white sticky top-0 z-30 border-b border-gray-200 shadow-sm">
                 <div class="px-4 lg:px-8 py-4">
                     <div class="flex items-center gap-4">
                         
-                        <!-- Mobile Menu Button -->
                         <button id="openSidebar" class="lg:hidden text-gray-600 hover:text-gray-900 hover:bg-gray-100 p-3 rounded-xl">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
                             </svg>
                         </button>
 
-                        <!-- Logo Mobile -->
                         <div class="lg:hidden flex items-center">
                             <i class="fas fa-book-open text-blue-600 text-xl mr-2"></i>
                             <span class="font-bold text-gray-800">Perpustakaan</span>
                         </div>
 
-                        <!-- Search Bar - Sangat Prominent -->
                         <div class="flex-1 max-w-3xl">
                             <form action="{{ route('books.index') }}" method="GET">
                                 <div class="relative">
@@ -585,10 +553,8 @@
                             </form>
                         </div>
 
-                        <!-- Action Buttons -->
                         <div class="flex items-center gap-3">
                             
-                            <!-- Dark Mode Toggle -->
                             <button 
                                 id="darkModeToggle"
                                 class="btn-large flex items-center justify-center w-12 h-12 bg-gray-100 text-gray-600 rounded-xl hover:bg-gray-200 relative"
@@ -601,7 +567,6 @@
                                 </div>
                             </button>
 
-                            <!-- Filter Button - Jelas dengan Text -->
                             <button 
                                 id="toggleFilter" 
                                 class="btn-large flex items-center gap-2 px-6 bg-blue-600 text-white rounded-xl hover:bg-blue-700 shadow-md hover:shadow-lg font-medium"
@@ -611,7 +576,6 @@
                                 <span class="hidden sm:inline">Filter</span>
                             </button>
 
-                            <!-- Notification Button with Real Data -->
                             <div class="relative">
                                 <button 
                                     id="notificationBtn"
@@ -626,7 +590,6 @@
                                     @endif
                                 </button>
 
-                                <!-- Notification Dropdown with Real Notifications -->
                                 <div id="notificationDropdown" class="notification-dropdown">
                                     <div class="p-4 border-b border-gray-200">
                                         <div class="flex items-center justify-between">
@@ -695,7 +658,6 @@
                                 </div>
                             </div>
 
-                            <!-- User Avatar (Mobile) -->
                             <a href="{{ route('users.edit', Auth::id()) }}" class="lg:hidden">
                                 <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-700 rounded-full flex items-center justify-center shadow overflow-hidden">
                                     @if(Auth::user()->image)
@@ -714,11 +676,8 @@
                 </div>
             </header>
 
-            <!-- [Keep Filter Panel and rest of the layout exactly the same] -->
-            <!-- Filter Panel (Slide dari kanan) -->
             <div id="filterPanel" class="fixed inset-y-0 right-0 z-50 w-full sm:w-96 bg-white shadow-2xl transform translate-x-full transition-transform duration-300 overflow-y-auto">
                 
-                <!-- Header Panel -->
                 <div class="sticky top-0 bg-gradient-to-r from-blue-600 to-blue-700 text-white p-6 shadow-md">
                     <div class="flex items-center justify-between">
                         <div>
@@ -734,13 +693,10 @@
                     </div>
                 </div>
 
-                <!-- Filter Form -->
                 <form action="{{ route('books.index') }}" method="GET" class="p-6 space-y-6">
                     
-                    <!-- Preserve search query -->
                     <input type="hidden" name="search" value="{{ request('search') }}">
 
-                    <!-- Category Filter -->
                     <div class="card-friendly p-4">
                         <label class="block text-base font-bold text-gray-700 mb-3">
                             <i class="fas fa-tags text-blue-600 mr-2"></i>
@@ -756,7 +712,6 @@
                         </select>
                     </div>
 
-                    <!-- Stock Filter -->
                     <div class="card-friendly p-4">
                         <label class="block text-base font-bold text-gray-700 mb-3">
                             <i class="fas fa-boxes text-blue-600 mr-2"></i>
@@ -784,7 +739,6 @@
                         </p>
                     </div>
 
-                    <!-- Sort Options -->
                     <div class="card-friendly p-4">
                         <label class="block text-base font-bold text-gray-700 mb-3">
                             <i class="fas fa-sort text-blue-600 mr-2"></i>
@@ -803,7 +757,6 @@
                         </select>
                     </div>
 
-                    <!-- Action Buttons - Lebih Besar dan Jelas -->
                     <div class="flex gap-3 pt-4">
                         <button 
                             type="submit"
@@ -823,13 +776,10 @@
                 </form>
             </div>
 
-            <!-- Filter Panel Overlay -->
             <div id="filterOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden"></div>
 
-            <!-- Main Content -->
             <main class="flex-1 overflow-y-auto p-4 lg:p-8">
                 
-                <!-- Flash Messages - Lebih Friendly -->
                 @if (session('success'))
                     <div class="flash-message card-friendly bg-gradient-to-r from-green-50 to-emerald-50 border-l-4 border-green-500 p-5 mb-6">
                         <div class="flex items-start">
@@ -901,18 +851,17 @@
                 @yield('content')
             </main>
 
-            <!-- Footer -->
             <footer class="bg-white border-t border-gray-200 py-4 shadow-inner">
                 <div class="px-4 lg:px-8">
                     <div class="flex flex-col md:flex-row items-center justify-between text-sm text-gray-600">
                         <div class="flex items-center space-x-2 mb-2 md:mb-0">
                             <i class="fas fa-copyright text-gray-400"></i>
-                            <span>2024 Perpustakaan Digital. Hak Cipta Dilindungi.</span>
+                            <span>Perpustakaan Digital.</span>
                         </div>
                         <div class="flex items-center space-x-4">
-                            <span class="text-gray-400">Versi 1.0.0</span>
+                            <span class="text-gray-400">Github</span>
                             <span class="text-gray-300">|</span>
-                            <span>Dibuat dengan <i class="fas fa-heart text-red-500"></i></span>
+                            <span>Dithoss</span>
                         </div>
                     </div>
                 </div>
@@ -920,106 +869,160 @@
         </div>
     </div>
 
-    <!-- Back to Top Button - Lebih Besar -->
     <button id="backToTop" 
             class="fixed bottom-8 right-8 w-14 h-14 bg-blue-600 text-white rounded-full shadow-2xl hover:bg-blue-700 transition-all transform hover:scale-110 hidden z-50">
         <i class="fas fa-arrow-up text-xl"></i>
     </button>
 
     <script>
-        // Dark Mode Handler
         const darkModeToggle = document.getElementById('darkModeToggle');
         const html = document.documentElement;
         
-        // Check for saved dark mode preference or default to light mode
         const currentMode = localStorage.getItem('darkMode') || 'light';
         if (currentMode === 'dark') {
             html.classList.add('dark');
         }
 
-        darkModeToggle?.addEventListener('click', () => {
-            html.classList.toggle('dark');
-            const isDark = html.classList.contains('dark');
-            localStorage.setItem('darkMode', isDark ? 'dark' : 'light');
-            
-            // Update icon
-            const icon = darkModeToggle.querySelector('.dark-mode-toggle-slider i');
-            if (isDark) {
-                icon.className = 'fas fa-moon';
-            } else {
-                icon.className = 'fas fa-sun';
-            }
-        });
+        if (darkModeToggle) {
+            darkModeToggle.addEventListener('click', () => {
+                html.classList.toggle('dark');
+                const isDark = html.classList.contains('dark');
+                localStorage.setItem('darkMode', isDark ? 'dark' : 'light');
+                
+                const icon = darkModeToggle.querySelector('.dark-mode-toggle-slider i');
+                if (icon) {
+                    if (isDark) {
+                        icon.className = 'fas fa-moon';
+                    } else {
+                        icon.className = 'fas fa-sun';
+                    }
+                }
+            });
+        }
 
-        // Sidebar toggle
         const sidebar = document.getElementById('sidebar');
         const overlay = document.getElementById('sidebarOverlay');
         const openBtn = document.getElementById('openSidebar');
         const closeBtn = document.getElementById('closeSidebar');
 
         function openSidebar() {
-            sidebar.classList.remove('-translate-x-full');
-            overlay.classList.remove('hidden');
-            document.body.style.overflow = 'hidden';
+            if (sidebar && overlay) {
+                sidebar.classList.remove('-translate-x-full');
+                overlay.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            }
         }
 
         function closeSidebar() {
-            sidebar.classList.add('-translate-x-full');
-            overlay.classList.add('hidden');
-            document.body.style.overflow = '';
+            if (sidebar && overlay) {
+                sidebar.classList.add('-translate-x-full');
+                overlay.classList.add('hidden');
+                document.body.style.overflow = '';
+            }
         }
 
-        openBtn?.addEventListener('click', openSidebar);
-        closeBtn?.addEventListener('click', closeSidebar);
-        overlay?.addEventListener('click', closeSidebar);
+        if (openBtn) openBtn.addEventListener('click', openSidebar);
+        if (closeBtn) closeBtn.addEventListener('click', closeSidebar);
+        if (overlay) overlay.addEventListener('click', closeSidebar);
 
-        // Filter panel toggle
         const filterPanel = document.getElementById('filterPanel');
         const filterOverlay = document.getElementById('filterOverlay');
         const toggleFilterBtn = document.getElementById('toggleFilter');
         const closeFilterBtn = document.getElementById('closeFilter');
 
         function openFilter() {
-            filterPanel.classList.remove('translate-x-full');
-            filterOverlay.classList.remove('hidden');
-            document.body.style.overflow = 'hidden';
+            if (filterPanel && filterOverlay) {
+                filterPanel.classList.remove('translate-x-full');
+                filterOverlay.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            }
         }
 
         function closeFilter() {
-            filterPanel.classList.add('translate-x-full');
-            filterOverlay.classList.add('hidden');
-            document.body.style.overflow = '';
+            if (filterPanel && filterOverlay) {
+                filterPanel.classList.add('translate-x-full');
+                filterOverlay.classList.add('hidden');
+                document.body.style.overflow = '';
+            }
         }
 
-        toggleFilterBtn?.addEventListener('click', openFilter);
-        closeFilterBtn?.addEventListener('click', closeFilter);
-        filterOverlay?.addEventListener('click', closeFilter);
+        if (toggleFilterBtn) toggleFilterBtn.addEventListener('click', openFilter);
+        if (closeFilterBtn) closeFilterBtn.addEventListener('click', closeFilter);
+        if (filterOverlay) filterOverlay.addEventListener('click', closeFilter);
 
-        // Notification dropdown toggle
+        function toggleSubmenu(submenuId) {
+            const submenu = document.getElementById(submenuId);
+            const icon = document.getElementById(submenuId + 'Icon');
+            
+            if (submenu && icon) {
+                if (submenu.classList.contains('hidden')) {
+                    submenu.classList.remove('hidden');
+                    icon.style.transform = 'rotate(180deg)';
+                    localStorage.setItem(submenuId + 'Open', 'true');
+                } else {
+                    submenu.classList.add('hidden');
+                    icon.style.transform = 'rotate(0deg)';
+                    localStorage.setItem(submenuId + 'Open', 'false');
+                }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const submenuId = 'booksSubmenu';
+            const isOpen = localStorage.getItem(submenuId + 'Open') === 'true';
+            
+            const currentPath = window.location.pathname;
+            const isBooksPage = currentPath.includes('/books') || currentPath.includes('/wishlist');
+            
+            if (isOpen || isBooksPage) {
+                const submenu = document.getElementById(submenuId);
+                const icon = document.getElementById(submenuId + 'Icon');
+                
+                if (submenu && icon) {
+                    submenu.classList.remove('hidden');
+                    icon.style.transform = 'rotate(180deg)';
+                }
+            }
+            
+            document.querySelectorAll('.submenu-link').forEach(link => {
+                const href = link.getAttribute('href');
+                if (href && (currentPath === href || currentPath.startsWith(href + '/'))) {
+                    link.classList.add('bg-blue-50', 'font-bold');
+                }
+            });
+        });
+
         const notificationBtn = document.getElementById('notificationBtn');
         const notificationDropdown = document.getElementById('notificationDropdown');
 
-        notificationBtn?.addEventListener('click', function(e) {
-            e.stopPropagation();
-            notificationDropdown.classList.toggle('show');
-        });
+        if (notificationBtn) {
+            notificationBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                if (notificationDropdown) {
+                    notificationDropdown.classList.toggle('show');
+                }
+            });
+        }
 
-        // Close notification when clicking outside
         document.addEventListener('click', function(e) {
-            if (!notificationBtn?.contains(e.target) && !notificationDropdown?.contains(e.target)) {
-                notificationDropdown?.classList.remove('show');
+            if (notificationDropdown && notificationBtn) {
+                if (!notificationBtn.contains(e.target) && !notificationDropdown.contains(e.target)) {
+                    notificationDropdown.classList.remove('show');
+                }
             }
         });
 
-        // Mark notification as read when clicked
         document.querySelectorAll('.notification-item').forEach(item => {
             item.addEventListener('click', function() {
                 const notificationId = this.dataset.notificationId;
+                const csrfToken = document.querySelector('meta[name="csrf-token"]');
                 
-                fetch(`/notifications/${notificationId}/read`, {
+                if (!csrfToken) return;
+                
+                fetch('/notifications/' + notificationId + '/read', {
                     method: 'POST',
                     headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'X-CSRF-TOKEN': csrfToken.content,
                         'Accept': 'application/json',
                         'Content-Type': 'application/json'
                     }
@@ -1028,72 +1031,73 @@
                 .then(data => {
                     if (data.success) {
                         this.classList.remove('unread');
-                        this.querySelector('.bg-blue-500')?.remove();
-                        
-                        // Update badge count
+                        const dot = this.querySelector('.bg-blue-500');
+                        if (dot) dot.remove();
                         updateNotificationBadge();
                     }
-                });
+                })
+                .catch(error => console.error('Error:', error));
             });
         });
 
-        // Mark all as read
-        document.getElementById('markAllRead')?.addEventListener('click', function() {
-            fetch('/notifications/mark-all-read', {
-                method: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    document.querySelectorAll('.notification-item').forEach(item => {
-                        item.classList.remove('unread');
-                    });
-                    document.querySelectorAll('.bg-blue-500').forEach(dot => dot.remove());
-                    this.style.display = 'none';
-                    
-                    // Update badge
-                    const badge = document.getElementById('notificationBadge');
-                    if (badge) {
-                        badge.classList.add('hidden');
+        const markAllReadBtn = document.getElementById('markAllRead');
+        if (markAllReadBtn) {
+            markAllReadBtn.addEventListener('click', function() {
+                const csrfToken = document.querySelector('meta[name="csrf-token"]');
+                if (!csrfToken) return;
+                
+                fetch('/notifications/mark-all-read', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': csrfToken.content,
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
                     }
-                }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        document.querySelectorAll('.notification-item').forEach(item => {
+                            item.classList.remove('unread');
+                        });
+                        document.querySelectorAll('.bg-blue-500').forEach(dot => dot.remove());
+                        this.style.display = 'none';
+                        
+                        const badge = document.getElementById('notificationBadge');
+                        if (badge) badge.classList.add('hidden');
+                    }
+                })
+                .catch(error => console.error('Error:', error));
             });
-        });
+        }
 
-        // Function to update notification badge
         function updateNotificationBadge() {
             fetch('/notifications/unread-count')
                 .then(response => response.json())
                 .then(data => {
                     const badge = document.getElementById('notificationBadge');
-                    if (data.count > 0) {
-                        if (badge) {
+                    if (badge) {
+                        if (data.count > 0) {
                             badge.textContent = data.count;
                             badge.classList.remove('hidden');
-                        }
-                    } else {
-                        if (badge) {
+                        } else {
                             badge.classList.add('hidden');
                         }
                     }
-                });
+                })
+                .catch(error => console.error('Error:', error));
         }
 
-        // Close all panels on escape
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
                 closeSidebar();
                 closeFilter();
-                notificationDropdown?.classList.remove('show');
+                if (notificationDropdown) {
+                    notificationDropdown.classList.remove('show');
+                }
             }
         });
 
-        // Highlight active menu
         const currentPath = window.location.pathname;
         document.querySelectorAll('.nav-link').forEach(link => {
             const href = link.getAttribute('href');
@@ -1102,7 +1106,6 @@
             }
         });
 
-        // Back to top button
         const backToTopBtn = document.getElementById('backToTop');
         const mainContent = document.querySelector('main');
         
@@ -1123,7 +1126,6 @@
             });
         }
 
-        // Auto-hide flash messages after 7 seconds
         setTimeout(() => {
             const flashMessages = document.querySelectorAll('.flash-message');
             flashMessages.forEach(message => {

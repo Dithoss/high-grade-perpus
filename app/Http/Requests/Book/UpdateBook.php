@@ -23,6 +23,7 @@ class UpdateBook extends FormRequest
     {
         return [
             'name' => 'sometimes|string|max:255',
+            'sypnosis' => 'nullable|string|max:255',
             'writer' => 'sometimes|string|max:255',
             'category_id' => 'sometimes|uuid|exists:categories,id',
             'stock' => 'sometimes|integer|min:0',

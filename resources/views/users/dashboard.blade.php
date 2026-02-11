@@ -232,7 +232,7 @@
             @if($recentBooks->count() > 0)
                 <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
                     @foreach($recentBooks as $book)
-                    <a href="{{ route('books.show', $book->id) }}" class="group">
+                    <a href="{{ route('books.show', $book->slug) }}" class="group">
                         <div class="bg-white rounded-lg shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden transform hover:-translate-y-1">
                             <div class="aspect-[3/4] bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center overflow-hidden">
                                 @if($book->image)

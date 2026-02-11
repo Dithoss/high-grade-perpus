@@ -59,5 +59,18 @@ class User extends Authenticatable
     {
         return $this->hasMany(Transaction::class, 'user_id');
     }
-
+    public function fines()
+    {
+        return $this->hasManyThrough(
+            Fine::class,
+            Transaction::class,
+            'user_id',       
+            'transaction_id' 
+        );
+    }
+    public function wishlists()
+    {
+        return $this->belongsToMany(Book::class, 'wishlists')
+                    ->withTimestamps();
+    }
 }

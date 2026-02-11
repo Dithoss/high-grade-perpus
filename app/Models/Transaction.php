@@ -71,4 +71,8 @@ class Transaction extends Model
     {
         return $this->is_extended === true;
     }
+    public function book()
+    {
+        return $this->belongsTo(Book::class);
+    }
 }

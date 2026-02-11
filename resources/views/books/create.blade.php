@@ -78,6 +78,26 @@
                 @enderror
             </div>
 
+            <!-- Synopsis - UPDATED WITH LARGER TEXTAREA -->
+            <div class="group">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">
+                    <i class="fas fa-align-left text-purple-600 mr-2"></i>Sinopsis
+                </label>
+                <textarea 
+                    name="sypnosis" 
+                    rows="6"
+                    class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-purple-500 focus:ring-4 focus:ring-purple-100 transition-all duration-200 outline-none resize-y @error('sypnosis') border-red-500 @enderror" 
+                    placeholder="Masukkan sinopsis atau deskripsi lengkap tentang buku ini...&#10;&#10;Contoh: Cerita tentang petualangan seorang pemuda yang mencari..."
+                >{{ old('sypnosis') }}</textarea>
+                <p class="text-xs text-gray-500 mt-2">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    Jelaskan ringkasan cerita, tema utama, atau poin-poin penting dari buku
+                </p>
+                @error('sypnosis')
+                    <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                @enderror
+            </div>
+
             <!-- Category -->
             <div class="group">
                 <label class="block text-sm font-semibold text-gray-700 mb-2">

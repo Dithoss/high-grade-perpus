@@ -46,6 +46,26 @@
                     <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
                 @enderror
             </div>
+                <div class="group">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">
+                    <svg class="w-4 h-4 inline text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                    </svg>
+                    Sipnosis Buku
+                    <span class="text-red-500">*</span>
+                </label>
+                <input 
+                    type="text" 
+                    name="sypnosis" 
+                    value="{{ old('sypnosis', $book->sypnosis) }}"
+                    class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 outline-none @error('sypnosis') border-red-500 @enderror" 
+                    placeholder="Masukkan nama buku"
+                    required
+                >
+                @error('sypnosis')
+                    <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                @enderror
+            </div>
 
             <!-- Barcode with Generator -->
             <div class="group">

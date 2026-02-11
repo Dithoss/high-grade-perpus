@@ -21,15 +21,16 @@ class OverdueNotification extends Notification
 
     public function toArray(object $notifiable): array
     {
+        $bookName = $this->transaction->items->first()?->book?->name ?? 'Buku';
         $daysOverdue = now()->diffInDays($this->transaction->due_at);
         
         return [
             'type' => 'overdue',
             'title' => 'Pengembalian Terlambat',
-            'message' => 'Buku "' . $this->transaction->book->name . '" terlambat ' . $daysOverdue . ' hari. Segera kembalikan!',
+            'message' => "Buku \"{$bookName}\" terlambat {$daysOverdue} hari. Segera kembalikan!",
             'transaction_id' => $this->transaction->id,
-            'book_name' => $this->transaction->book->name,
-            'due_at' => $this->transaction->due_at->toDateString(),
+            'book_name' => $bookName,
+            'due_date' => $this->transaction->due_at?->format('d M Y'),
             'days_overdue' => $daysOverdue,
             'icon' => 'fa-exclamation-triangle',
             'icon_color' => 'red',

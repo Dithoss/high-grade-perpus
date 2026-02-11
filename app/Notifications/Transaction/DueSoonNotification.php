@@ -18,16 +18,17 @@ class DueSoonNotification extends Notification
     {
         return ['database'];
     }
-
     public function toArray(object $notifiable): array
     {
+        $bookName = $this->transaction->items->first()?->book?->name ?? 'Buku';
+        
         return [
             'type' => 'due_soon',
             'title' => 'Pengingat: Batas Pengembalian Segera',
-            'message' => 'Buku "' . $this->transaction->book->name . '" akan jatuh tempo dalam 3 hari.',
+            'message' => "Buku \"{$bookName}\" akan jatuh tempo dalam 3 hari.",
             'transaction_id' => $this->transaction->id,
-            'book_name' => $this->transaction->book->name,
-            'due_at' => $this->transaction->due_at->toDateString(),
+            'book_name' => $bookName,
+            'due_date' => $this->transaction->due_at?->format('d M Y'),
             'icon' => 'fa-clock',
             'icon_color' => 'amber',
         ];

@@ -23,6 +23,7 @@ class StoreBook extends FormRequest
     {
         return [
             'name' => 'required|string|max:255',
+            'sypnosis' => 'nullable|string|max:255',
             'writer' => 'required|string|max:255',
             'category_id' => 'sometimes|exists:categories,id',
             'stock' => 'required|integer|min:0',

@@ -37,7 +37,7 @@
             <!-- Left Column - Image & Barcode -->
             <div class="space-y-6">
                 <!-- Book Image -->
-                <div class="bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl p-8 flex items-center justify-center shadow-inner" style="min-height: 400px;">
+                <div class="bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl p-8 flex items-center justify-center shadow-inner relative" style="min-height: 400px;">
                     @if($book->image)
                         <img src="{{ asset('storage/' . $book->image) }}" alt="{{ $book->name }}" class="max-w-full max-h-full object-contain rounded-lg">
                     @else
@@ -48,6 +48,22 @@
                             <p class="font-medium text-lg">Tidak ada gambar</p>
                         </div>
                     @endif
+
+                    <!-- Large Wishlist Button - Top Right Corner -->
+                    @role('user')
+                    <button 
+                        id="wishlistBtnLarge"
+                        onclick="toggleWishlistLarge('{{ $book->slug }}')"
+                        class="absolute top-4 right-4 px-6 py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transition-all duration-300 flex items-center space-x-2 {{ auth()->user()->wishlists()->where('book_id', $book->id)->exists() ? 'bg-gradient-to-r from-pink-500 to-rose-500 text-white' : 'bg-white text-gray-700 hover:bg-gray-50' }}"
+                    >
+                        <svg class="w-6 h-6 {{ auth()->user()->wishlists()->where('book_id', $book->id)->exists() ? 'fill-current' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                        </svg>
+                        <span id="wishlistTextLarge">
+                            {{ auth()->user()->wishlists()->where('book_id', $book->id)->exists() ? 'Tersimpan' : 'Simpan' }}
+                        </span>
+                    </button>
+                    @endrole
                 </div>
 
                 <!-- Barcode Display -->
@@ -93,6 +109,21 @@
                         <span class="text-xl font-medium">{{ $book->writer }}</span>
                     </div>
                 </div>
+
+                <!-- Synopsis Section -->
+                @if($book->sypnosis)
+                <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 border-2 border-blue-200 shadow-sm">
+                    <h3 class="text-lg font-bold text-gray-900 mb-3 flex items-center">
+                        <svg class="w-6 h-6 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        Sinopsis
+                    </h3>
+                    <div class="text-gray-700 leading-relaxed whitespace-pre-line text-sm">
+                        {{ $book->sypnosis }}
+                    </div>
+                </div>
+                @endif
 
                 <!-- Details Grid -->
                 <div class="space-y-4">
@@ -200,6 +231,21 @@
                 <!-- Action Buttons -->
                 <div class="flex flex-col gap-3 pt-6 border-t-2 border-gray-100">
                     @role('user')
+                        <!-- Wishlist Button - Prominent -->
+                        <button 
+                            id="wishlistBtn"
+                            onclick="toggleWishlist('{{ $book->slug }}')"
+                            class="w-full px-6 py-4 rounded-xl font-bold transition-all duration-300 flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl hover:-translate-y-0.5 {{ auth()->user()->wishlists()->where('book_id', $book->id)->exists() ? 'bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white' : 'bg-gradient-to-r from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 text-gray-700' }}"
+                        >
+                            <svg class="w-6 h-6 {{ auth()->user()->wishlists()->where('book_id', $book->id)->exists() ? 'fill-current' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                            </svg>
+                            <span id="wishlistText">
+                                {{ auth()->user()->wishlists()->where('book_id', $book->id)->exists() ? 'Hapus dari Wishlist' : 'Tambah ke Wishlist' }}
+                            </span>
+                        </button>
+
+                        <!-- Borrow Button -->
                         @if($book->stock > 0)
                         <a 
                             href="{{ route('transactions.create', ['book_id' => $book->id]) }}" 
@@ -266,7 +312,7 @@
 
         <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             @foreach($relatedBooks as $related)
-            <a href="{{ route('books.show', $related->id) }}" class="group">
+            <a href="{{ route('books.show', $related->slug) }}" class="group">
                 <div class="bg-white rounded-lg shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden transform hover:-translate-y-1">
                     <div class="aspect-[3/4] bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center overflow-hidden">
                         @if($related->image)
@@ -324,6 +370,211 @@ function copyBarcode() {
             button.innerHTML = originalHTML;
         }, 2000);
     });
+}
+
+// Get CSRF token
+function getCsrfToken() {
+    const token = document.querySelector('meta[name="csrf-token"]');
+    if (!token) {
+        console.error('CSRF token not found!');
+        return null;
+    }
+    return token.content;
+}
+
+// Toggle wishlist - Main button
+function toggleWishlist(bookSlug) {
+    const button = document.getElementById('wishlistBtn');
+    const buttonText = document.getElementById('wishlistText');
+    const icon = button.querySelector('svg');
+    const csrfToken = getCsrfToken();
+    
+    if (!csrfToken) {
+        showToast('Error: CSRF token tidak ditemukan', 'error');
+        return;
+    }
+    
+    // Disable button
+    button.disabled = true;
+    button.style.opacity = '0.7';
+    
+    console.log('Toggling wishlist for book ID:', bookSlug);
+    
+    fetch('/wishlist/' + bookSlug + '/toggle', {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': csrfToken,
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => {
+        console.log('Response status:', response.status);
+        if (!response.ok) {
+            throw new Error('HTTP error! status: ' + response.status);
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Response data:', data);
+        
+        if (data.status === 'added') {
+            // Update to "in wishlist" state
+            button.className = 'w-full px-6 py-4 rounded-xl font-bold transition-all duration-300 flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl hover:-translate-y-0.5 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white';
+            buttonText.textContent = 'Hapus dari Wishlist';
+            icon.classList.add('fill-current');
+            
+            // Also update large button if exists
+            updateLargeButton(true);
+            
+            showToast('✓ Ditambahkan ke wishlist!', 'success');
+        } else if (data.status === 'removed') {
+            // Update to "not in wishlist" state
+            button.className = 'w-full px-6 py-4 rounded-xl font-bold transition-all duration-300 flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl hover:-translate-y-0.5 bg-gradient-to-r from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 text-gray-700';
+            buttonText.textContent = 'Tambah ke Wishlist';
+            icon.classList.remove('fill-current');
+            
+            // Also update large button if exists
+            updateLargeButton(false);
+            
+            showToast('Dihapus dari wishlist', 'info');
+        }
+    })
+    .catch(error => {
+        console.error('Error details:', error);
+        showToast('Terjadi kesalahan: ' + error.message, 'error');
+    })
+    .finally(() => {
+        // Re-enable button
+        button.disabled = false;
+        button.style.opacity = '1';
+    });
+}
+
+// Toggle wishlist - Large button on image
+function toggleWishlistLarge(bookSlug) {
+    const button = document.getElementById('wishlistBtnLarge');
+    const buttonText = document.getElementById('wishlistTextLarge');
+    const icon = button.querySelector('svg');
+    const csrfToken = getCsrfToken();
+    
+    if (!csrfToken) {
+        showToast('Error: CSRF token tidak ditemukan', 'error');
+        return;
+    }
+    
+    // Disable button
+    button.disabled = true;
+    button.style.opacity = '0.7';
+    
+    console.log('Toggling wishlist (large button) for book ID:', bookSlug);
+    
+    fetch('/wishlist/' + bookSlug + '/toggle', {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': csrfToken,
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => {
+        console.log('Response status:', response.status);
+        if (!response.ok) {
+            throw new Error('HTTP error! status: ' + response.status);
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Response data:', data);
+        
+        if (data.status === 'added') {
+            button.className = 'absolute top-4 right-4 px-6 py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transition-all duration-300 flex items-center space-x-2 bg-gradient-to-r from-pink-500 to-rose-500 text-white';
+            buttonText.textContent = 'Tersimpan';
+            icon.classList.add('fill-current');
+            
+            // Also update main button if exists
+            updateMainButton(true);
+            
+            showToast('✓ Ditambahkan ke wishlist!', 'success');
+        } else if (data.status === 'removed') {
+            button.className = 'absolute top-4 right-4 px-6 py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transition-all duration-300 flex items-center space-x-2 bg-white text-gray-700 hover:bg-gray-50';
+            buttonText.textContent = 'Simpan';
+            icon.classList.remove('fill-current');
+            
+            // Also update main button if exists
+            updateMainButton(false);
+            
+            showToast('Dihapus dari wishlist', 'info');
+        }
+    })
+    .catch(error => {
+        console.error('Error details:', error);
+        showToast('Terjadi kesalahan: ' + error.message, 'error');
+    })
+    .finally(() => {
+        // Re-enable button
+        button.disabled = false;
+        button.style.opacity = '1';
+    });
+}
+
+// Helper function to update main button
+function updateMainButton(inWishlist) {
+    const button = document.getElementById('wishlistBtn');
+    const buttonText = document.getElementById('wishlistText');
+    const icon = button ? button.querySelector('svg') : null;
+    
+    if (button && buttonText && icon) {
+        if (inWishlist) {
+            button.className = 'w-full px-6 py-4 rounded-xl font-bold transition-all duration-300 flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl hover:-translate-y-0.5 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white';
+            buttonText.textContent = 'Hapus dari Wishlist';
+            icon.classList.add('fill-current');
+        } else {
+            button.className = 'w-full px-6 py-4 rounded-xl font-bold transition-all duration-300 flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl hover:-translate-y-0.5 bg-gradient-to-r from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 text-gray-700';
+            buttonText.textContent = 'Tambah ke Wishlist';
+            icon.classList.remove('fill-current');
+        }
+    }
+}
+
+// Helper function to update large button
+function updateLargeButton(inWishlist) {
+    const button = document.getElementById('wishlistBtnLarge');
+    const buttonText = document.getElementById('wishlistTextLarge');
+    const icon = button ? button.querySelector('svg') : null;
+    
+    if (button && buttonText && icon) {
+        if (inWishlist) {
+            button.className = 'absolute top-4 right-4 px-6 py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transition-all duration-300 flex items-center space-x-2 bg-gradient-to-r from-pink-500 to-rose-500 text-white';
+            buttonText.textContent = 'Tersimpan';
+            icon.classList.add('fill-current');
+        } else {
+            button.className = 'absolute top-4 right-4 px-6 py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transition-all duration-300 flex items-center space-x-2 bg-white text-gray-700 hover:bg-gray-50';
+            buttonText.textContent = 'Simpan';
+            icon.classList.remove('fill-current');
+        }
+    }
+}
+
+// Toast notification
+function showToast(message, type) {
+    const colors = {
+        success: 'bg-green-500',
+        error: 'bg-red-500',
+        info: 'bg-blue-500'
+    };
+    
+    const toast = document.createElement('div');
+    toast.className = `fixed bottom-4 right-4 ${colors[type]} text-white px-6 py-3 rounded-lg shadow-lg z-50 transform transition-all duration-300`;
+    toast.textContent = message;
+    
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(20px)';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
 }
 </script>
 @endpush

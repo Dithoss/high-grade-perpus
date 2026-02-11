@@ -21,13 +21,15 @@ class DueTodayNotification extends Notification
 
     public function toArray(object $notifiable): array
     {
+        $bookName = $this->transaction->items->first()?->book?->name ?? 'Buku';
+        
         return [
             'type' => 'due_today',
             'title' => 'Pengembalian Jatuh Tempo Hari Ini',
-            'message' => 'Buku "' . $this->transaction->book->name . '" harus dikembalikan hari ini.',
+            'message' => "Buku \"{$bookName}\" harus dikembalikan hari ini.",
             'transaction_id' => $this->transaction->id,
-            'book_name' => $this->transaction->book->name,
-            'due_at' => $this->transaction->due_at->toDateString(),
+            'book_name' => $bookName,
+            'due_date' => $this->transaction->due_at?->format('d M Y'),
             'icon' => 'fa-exclamation-circle',
             'icon_color' => 'orange',
         ];

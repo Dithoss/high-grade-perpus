@@ -13,7 +13,7 @@ class PaymentController extends Controller
         $merchantRef = 'INV-' . Str::uuid();
 
         $payload = [
-            'method' => $request->payment_method ?? 'BRIVA', // contoh
+            'method' => $request->payment_method ?? 'BRIVA', 
             'merchant_ref' => $merchantRef,
             'amount' => 150000,
             'customer_name' => 'Dimas',

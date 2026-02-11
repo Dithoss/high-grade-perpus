@@ -14,7 +14,7 @@ class Book extends Model
 {
     use HasFactory, Notifiable, HasUuids, SoftDeletes;
     protected $fillable = [
-        'name', 'barcode', 'stock', 'writer', 'category_id','slug', 'image'];
+        'name', 'barcode', 'stock', 'writer', 'category_id','slug', 'image','sypnosis'];
 
     protected $guarded = [];
     public function getRouteKeyName(): string
@@ -28,7 +28,17 @@ class Book extends Model
     public function category(){
         return $this->belongsTo(Category::class);
     }
+    public function wishlists()
+    {
+        return $this->hasMany(Wishlist::class);
+    }
     public function views(){
         return $this->hasMany(Algorithm::class);
     }
+    public function wishlistedBy()
+    {
+        return $this->belongsToMany(User::class, 'wishlists')
+                    ->withTimestamps();
+    }
+
 }
